@@ -1,8 +1,5 @@
 /* DAYMARK — Responsive & Platform Optimizations */
 
-/* ==========================================================================
-   Mobile-First & iPhone Safe Area Handling
-   ========================================================================== */
 @supports (padding: max(0px)) {
   body {
     padding-left: min(0vmin, env(safe-area-inset-left));
@@ -10,13 +7,15 @@
   }
 }
 
-/* Touch targets: ensure interactive elements have at least 44x44 touch area */
 @media (pointer: coarse) {
   .btn,
   .quick-action-btn,
   .nav-item,
   .filter-chip,
-  .checkbox-btn {
+  .checkbox-btn,
+  .preset-chip,
+  .prio-select-pill,
+  .dropdown-item {
     min-height: 44px;
   }
 
@@ -27,12 +26,10 @@
   }
 }
 
-/* Prevent text zoom in landscape or on input focus on iOS */
 input, select, textarea {
   font-size: 16px !important;
 }
 
-/* Mobile specific layout tweaks (< 640px) */
 @media (max-width: 639px) {
   .main-content {
     padding-left: var(--space-sm);
@@ -62,7 +59,7 @@ input, select, textarea {
   }
 
   .stat-value {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
   }
 
   .quick-action-btn {
@@ -88,7 +85,7 @@ input, select, textarea {
   }
 
   .modal-sheet {
-    max-height: 85vh;
+    max-height: 88vh;
   }
 
   .modal-header,
@@ -97,9 +94,12 @@ input, select, textarea {
     padding-left: var(--space-md);
     padding-right: var(--space-md);
   }
+
+  .prio-pills-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-/* Medium Screens & Tablets (640px to 839px) */
 @media (min-width: 640px) and (max-width: 839px) {
   .main-content {
     padding: var(--space-lg);
@@ -107,9 +107,7 @@ input, select, textarea {
   }
 }
 
-/* ==========================================================================
-   Desktop Layout (>= 840px)
-   ========================================================================== */
+/* Desktop layout (>= 840px) */
 @media (min-width: 840px) {
   body {
     padding-bottom: 0;
@@ -120,6 +118,10 @@ input, select, textarea {
   }
 
   .bottom-nav {
+    display: none;
+  }
+
+  .mobile-fab {
     display: none;
   }
 
@@ -161,7 +163,6 @@ input, select, textarea {
   }
 }
 
-/* Extra large screens (>= 1200px) */
 @media (min-width: 1200px) {
   .main-content {
     max-width: 1140px;
