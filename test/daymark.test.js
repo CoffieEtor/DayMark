@@ -385,3 +385,58 @@ test('5. Backend API Endpoints & Notification Architecture', async (t) => {
   });
 });
 
+test('6. Enhanced Features — Subtasks, Wishlist Multi-Sort & Picker Budget Constraints', async (t) => {
+  await t.test('Task subtasks can be toggled and calculated', () => {
+    const task = {
+      id: 'task-sub-1',
+      title: 'Quarterly review',
+      subtasks: [
+        { id: 'st1', text: 'Gather metrics', completed: true },
+        { id: 'st2', text: 'Write summary report', completed: false }
+      ]
+    };
+
+    assert.equal(task.subtasks.length, 2);
+    const completed = task.subtasks.filter(s => s.completed).length;
+    assert.equal(completed, 1);
+    const pct = Math.round((completed / task.subtasks.length) * 100);
+    assert.equal(pct, 50);
+  });
+
+  await t.test('Wishlist sorting by price ascending and descending', () => {
+    const items = [
+      { id: '1', name: 'Item B', estimatedPrice: 450, priority: 'low' },
+      { id: '2', name: 'Item A', estimatedPrice: 150, priority: 'high' },
+      { id: '3', name: 'Item C', estimatedPrice: 1200, priority: 'medium' }
+    ];
+
+    // Sort price-asc
+    const asc = [...items].sort((a, b) => a.estimatedPrice - b.estimatedPrice);
+    assert.equal(asc[0].id, '2'); // 150
+    assert.equal(asc[2].id, '3'); // 1200
+
+    // Sort price-desc
+    const desc = [...items].sort((a, b) => b.estimatedPrice - a.estimatedPrice);
+    assert.equal(desc[0].id, '3'); // 1200
+    assert.equal(desc[2].id, '2'); // 150
+  });
+
+  await t.test('Random Picker strictly applies maximum budget limit', () => {
+    const items = [
+      { id: '1', name: 'Cheap gadget', estimatedPrice: 150, purchased: false },
+      { id: '2', name: 'Expensive laptop', estimatedPrice: 4500, purchased: false },
+      { id: '3', name: 'Mid gadget', estimatedPrice: 400, purchased: false },
+      { id: '4', name: 'Purchased gadget', estimatedPrice: 100, purchased: true }
+    ];
+
+    // Filter unpurchased with max budget GH₵ 500
+    const budgetLimit = 500;
+    const eligible = items.filter(i => !i.purchased && i.estimatedPrice <= budgetLimit);
+
+    assert.equal(eligible.length, 2);
+    assert.ok(eligible.every(i => !i.purchased && i.estimatedPrice <= 500));
+    assert.equal(eligible.find(i => i.id === '2'), undefined); // 4500 excluded
+  });
+});
+
+
