@@ -1,4 +1,4 @@
-/* DAYMARK — Dashboard Controller */
+/* DAYMARK — Enhanced Dashboard Controller with Daily Progress */
 
 const Dashboard = {
   /**
@@ -6,6 +6,7 @@ const Dashboard = {
    */
   init() {
     this.renderGreeting();
+    this.renderProgressBar();
     this.renderStats();
     this.renderTodayTasks();
     this.renderUpcomingReminders();
@@ -14,6 +15,7 @@ const Dashboard = {
 
     // Subscribe to state updates
     State.subscribe('TASKS_UPDATED', () => {
+      this.renderProgressBar();
       this.renderStats();
       this.renderTodayTasks();
       this.renderHighPriorityTasks();
@@ -34,7 +36,6 @@ const Dashboard = {
       this.renderWishlistSummary();
     });
 
-    // Refresh greeting and date every minute
     setInterval(() => {
       this.renderGreeting();
     }, 60000);
@@ -56,6 +57,35 @@ const Dashboard = {
   },
 
   /**
+   * Render daily progress bar
+   */
+  renderProgressBar() {
+    const barFill = document.getElementById('dashProgressFill');
+    const textEl = document.getElementById('dashProgressText');
+    const badgeEl = document.getElementById('dashProgressBadge');
+    if (!barFill || !textEl) return;
+
+    const tasks = State.tasks || [];
+    const todayStr = Utils.getTodayDateString();
+    const todayTasks = tasks.filter(t => t.dueDate === todayStr);
+
+    if (todayTasks.length === 0) {
+      barFill.style.width = '100%';
+      textEl.textContent = 'No tasks due today — all clear!';
+      if (badgeEl) badgeEl.textContent = '100%';
+      return;
+    }
+
+    const completed = todayTasks.filter(t => t.completed).length;
+    const total = todayTasks.length;
+    const pct = Math.round((completed / total) * 100);
+
+    barFill.style.width = `${pct}%`;
+    textEl.textContent = `${completed} of ${total} tasks finished (${total - completed} remaining)`;
+    if (badgeEl) badgeEl.textContent = `${pct}%`;
+  },
+
+  /**
    * Compute real stats from current State
    */
   renderStats() {
@@ -64,22 +94,18 @@ const Dashboard = {
     const wishlist = State.wishlist || [];
     const todayStr = Utils.getTodayDateString();
 
-    // Tasks stats
     const todayTasks = tasks.filter(t => t.dueDate === todayStr);
     const todayCompleted = todayTasks.filter(t => t.completed).length;
     const pendingTasks = tasks.filter(t => !t.completed).length;
     const completedTasks = tasks.filter(t => t.completed).length;
     const overdueTasks = tasks.filter(t => !t.completed && t.dueDate && t.dueDate < todayStr).length;
 
-    // Reminders stats
     const upcomingReminders = reminders.filter(r => !r.completed && r.reminderDate >= todayStr).length;
     const overdueReminders = reminders.filter(r => !r.completed && r.reminderDate < todayStr).length;
 
-    // Wishlist stats
     const unpurchasedWishlist = wishlist.filter(w => !w.purchased);
     const totalWishlistCost = unpurchasedWishlist.reduce((sum, item) => sum + (Number(item.estimatedPrice) || 0), 0);
 
-    // Update DOM Stat Cards
     const statTodayTasksEl = document.getElementById('dashStatTodayTasks');
     const statPendingTasksEl = document.getElementById('dashStatPendingTasks');
     const statRemindersEl = document.getElementById('dashStatReminders');
@@ -124,11 +150,9 @@ const Dashboard = {
     const tasks = State.tasks || [];
     const todayStr = Utils.getTodayDateString();
 
-    // Include tasks due today and active overdue tasks
     const relevantTasks = tasks
       .filter(t => !t.completed && (t.dueDate === todayStr || (t.dueDate && t.dueDate < todayStr)))
       .sort((a, b) => {
-        // Overdue first, then by priority
         const aOverdue = a.dueDate < todayStr ? 1 : 0;
         const bOverdue = b.dueDate < todayStr ? 1 : 0;
         if (bOverdue !== aOverdue) return bOverdue - aOverdue;
@@ -242,7 +266,6 @@ const Dashboard = {
       return;
     }
 
-    // Pick top 2 items
     const sampleItems = unpurchased.slice(0, 2);
     container.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
