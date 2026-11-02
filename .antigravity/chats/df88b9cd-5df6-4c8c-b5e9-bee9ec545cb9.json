@@ -52,6 +52,18 @@
       "created_at": "2026-11-02T04:18:01.906Z",
       "sender": "ios",
       "is_cancelled": false
+    },
+    {
+      "id": "77d86f7e-4489-4953-8a84-fc0f3a340a7b",
+      "role": "agent",
+      "content": "terminating 1 daemon task(s) on exit",
+      "status": "completed",
+      "model": "gemini-3.8-flash-high",
+      "client_type": "gemini-bridge",
+      "parent_message_id": "0e54959a-dc35-4cbe-aa0c-f924389028d1",
+      "created_at": "2026-11-02T04:26:39.492Z",
+      "sender": "macOS",
+      "is_cancelled": false
     }
   ]
 }
