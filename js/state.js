@@ -9,6 +9,8 @@ class StateManager {
       settings: {
         currency: 'GH₵',
         theme: 'dark',
+        themeAccent: 'gold',
+        soundEnabled: true,
         notificationsEnabled: true,
         pushServerUrl: ''
       },
@@ -20,7 +22,10 @@ class StateManager {
       reminderSearch: '',
       wishlistFilter: 'all',
       wishlistCategory: 'all',
+      wishlistSort: 'newest',
       wishlistSearch: '',
+      pickerBudgetLimit: 0, // 0 = Any budget
+      pickerCategory: 'all',
       isOnline: navigator.onLine,
       notificationPermission: (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported'
     };
@@ -61,7 +66,6 @@ class StateManager {
         }
       }
     }
-    // Also notify global wildcard listeners
     if (this.listeners.has('*')) {
       for (const cb of this.listeners.get('*')) {
         try {
@@ -93,6 +97,12 @@ class StateManager {
         settingsEntries.forEach(entry => {
           this.data.settings[entry.key] = entry.value;
         });
+      }
+
+      // Apply theme accent
+      if (typeof document !== 'undefined' && document.documentElement) {
+        const accent = this.data.settings.themeAccent || 'gold';
+        document.documentElement.setAttribute('data-accent', accent);
       }
 
       this.emit('DATA_RELOADED', this.data);
@@ -154,9 +164,24 @@ class StateManager {
     this.emit('WISHLIST_CATEGORY_CHANGED', cat);
   }
 
+  setWishlistSort(sort) {
+    this.data.wishlistSort = sort;
+    this.emit('WISHLIST_SORT_CHANGED', sort);
+  }
+
   setWishlistSearch(query) {
     this.data.wishlistSearch = query.trim().toLowerCase();
     this.emit('WISHLIST_SEARCH_CHANGED', this.data.wishlistSearch);
+  }
+
+  setPickerBudgetLimit(limit) {
+    this.data.pickerBudgetLimit = Number(limit) || 0;
+    this.emit('PICKER_OPTIONS_CHANGED', { budget: this.data.pickerBudgetLimit, category: this.data.pickerCategory });
+  }
+
+  setPickerCategory(cat) {
+    this.data.pickerCategory = cat;
+    this.emit('PICKER_OPTIONS_CHANGED', { budget: this.data.pickerBudgetLimit, category: this.data.pickerCategory });
   }
 
   setOnlineStatus(online) {
