@@ -1,7 +1,7 @@
-/* DAYMARK — Global Styles & Design System */
+/* DAYMARK — Global Styles, Design Tokens & Dynamic Theme Accents */
 
 :root {
-  /* Color Palette */
+  /* Default Color Palette */
   --bg-main: #101114;
   --bg-secondary: #17191E;
   --bg-card: #1D2027;
@@ -12,11 +12,11 @@
   --text-secondary: #9A9DA7;
   --text-muted: #666B76;
   
-  /* Accent & Brand (Warm Gold) */
+  /* Accent: Default Champagne Gold */
   --accent: #D6B56D;
   --accent-hover: #E2C787;
-  --accent-muted: rgba(214, 181, 109, 0.14);
-  --accent-glow: 0 0 20px rgba(214, 181, 109, 0.22);
+  --accent-muted: rgba(214, 181, 109, 0.15);
+  --accent-glow: 0 0 24px rgba(214, 181, 109, 0.25);
   
   /* Status Colors */
   --success: #30D158;
@@ -28,9 +28,9 @@
   --info: #0A84FF;
   --info-bg: rgba(10, 132, 255, 0.12);
 
-  /* Priorities */
-  --prio-low: #666B76;
-  --prio-low-bg: rgba(102, 107, 118, 0.14);
+  /* Priority Levels */
+  --prio-low: #8E929D;
+  --prio-low-bg: rgba(142, 146, 157, 0.12);
   --prio-normal: #3B82F6;
   --prio-normal-bg: rgba(59, 130, 246, 0.14);
   --prio-high: #F59E0B;
@@ -40,7 +40,7 @@
 
   /* Borders & Dividers */
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(214, 181, 109, 0.5);
+  --border-focus: var(--accent);
 
   /* Typography */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -79,12 +79,41 @@
   --header-height: 60px;
   --bottom-nav-height: calc(64px + var(--safe-bottom));
   --sidebar-width: 260px;
-  --max-content-width: 960px;
+  --max-content-width: 980px;
 
   /* Transitions */
   --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Dynamic Accent Themes */
+[data-accent="emerald"] {
+  --accent: #30D158;
+  --accent-hover: #4CD964;
+  --accent-muted: rgba(48, 209, 88, 0.15);
+  --accent-glow: 0 0 24px rgba(48, 209, 88, 0.25);
+}
+
+[data-accent="azure"] {
+  --accent: #0A84FF;
+  --accent-hover: #409CFF;
+  --accent-muted: rgba(10, 132, 255, 0.15);
+  --accent-glow: 0 0 24px rgba(10, 132, 255, 0.25);
+}
+
+[data-accent="violet"] {
+  --accent: #BF5AF2;
+  --accent-hover: #D084F7;
+  --accent-muted: rgba(191, 90, 242, 0.15);
+  --accent-glow: 0 0 24px rgba(191, 90, 242, 0.25);
+}
+
+[data-accent="amber"] {
+  --accent: #FF9F0A;
+  --accent-hover: #FFB340;
+  --accent-muted: rgba(255, 159, 10, 0.15);
+  --accent-glow: 0 0 24px rgba(255, 159, 10, 0.25);
 }
 
 /* Base Reset & Box Sizing */
@@ -137,7 +166,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1 { font-size: 1.75rem; }
-h2 { font-size: 1.4rem; }
+h2 { font-size: 1.35rem; }
 h3 { font-size: 1.15rem; }
 h4 { font-size: 1rem; }
 
@@ -187,7 +216,7 @@ a:hover {
   right: 0;
   height: var(--header-height);
   padding-top: var(--safe-top);
-  background: rgba(16, 17, 20, 0.85);
+  background: rgba(16, 17, 20, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-subtle);
@@ -208,12 +237,17 @@ a:hover {
 }
 
 .brand-icon {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform var(--transition-fast);
+}
+
+.brand-wrapper:hover .brand-icon {
+  transform: rotate(6deg) scale(1.05);
 }
 
 .brand-title {
@@ -232,6 +266,7 @@ a:hover {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  position: relative;
 }
 
 /* Offline & Status Pill */
@@ -241,7 +276,7 @@ a:hover {
   gap: 6px;
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
@@ -283,11 +318,10 @@ a:hover {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Section Header Bar */
 .view-header {
   display: flex;
   flex-direction: column;
