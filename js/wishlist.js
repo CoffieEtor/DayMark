@@ -1,4 +1,4 @@
-/* DAYMARK — Wishlist Management Module */
+/* DAYMARK — Enhanced Wishlist Management Module with Multi-Sort & Priority */
 
 const Wishlist = {
   activeWishlistIdToEdit: null,
@@ -8,7 +8,7 @@ const Wishlist = {
    */
   init() {
     this.bindFilterChips();
-    this.bindSearchAndCategory();
+    this.bindSearchAndControls();
     this.renderMetrics();
     this.renderWishlist();
 
@@ -24,6 +24,10 @@ const Wishlist = {
     });
 
     State.subscribe('WISHLIST_CATEGORY_CHANGED', () => {
+      this.renderWishlist();
+    });
+
+    State.subscribe('WISHLIST_SORT_CHANGED', () => {
       this.renderWishlist();
     });
 
@@ -44,6 +48,7 @@ const Wishlist = {
     const chips = document.querySelectorAll('#wishlistFiltersBar .filter-chip');
     chips.forEach(chip => {
       chip.addEventListener('click', () => {
+        Utils.playSound('click');
         chips.forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
         const filter = chip.getAttribute('data-filter');
@@ -53,12 +58,13 @@ const Wishlist = {
   },
 
   /**
-   * Bind search bar and category dropdown
+   * Bind search bar, sort dropdown, and category dropdown
    */
-  bindSearchAndCategory() {
+  bindSearchAndControls() {
     const searchInput = document.getElementById('wishlistSearchInput');
     const searchClear = document.getElementById('wishlistSearchClear');
     const catSelect = document.getElementById('wishlistCategorySelect');
+    const sortSelect = document.getElementById('wishlistSortSelect');
 
     if (searchInput) {
       searchInput.addEventListener('input', Utils.debounce((e) => {
@@ -71,6 +77,7 @@ const Wishlist = {
 
     if (searchClear && searchInput) {
       searchClear.addEventListener('click', () => {
+        Utils.playSound('click');
         searchInput.value = '';
         searchClear.classList.remove('visible');
         State.setWishlistSearch('');
@@ -79,7 +86,15 @@ const Wishlist = {
 
     if (catSelect) {
       catSelect.addEventListener('change', (e) => {
+        Utils.playSound('click');
         State.setWishlistCategory(e.target.value);
+      });
+    }
+
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        Utils.playSound('click');
+        State.setWishlistSort(e.target.value);
       });
     }
 
@@ -95,7 +110,7 @@ const Wishlist = {
 
     const currentVal = State.data.wishlistCategory || 'all';
     const items = State.wishlist || [];
-    const categories = new Set(['Tech', 'Workspace', 'Home', 'Books', 'Personal', 'Clothing']);
+    const categories = new Set(['Tech', 'Workspace', 'Home', 'Books', 'Personal', 'Clothing', 'Travel']);
 
     items.forEach(item => {
       if (item.category && item.category.trim()) {
@@ -136,7 +151,7 @@ const Wishlist = {
   },
 
   /**
-   * Get filtered items
+   * Get filtered and sorted items
    */
   getVisibleItems() {
     let list = [...(State.wishlist || [])];
@@ -164,12 +179,29 @@ const Wishlist = {
       });
     }
 
-    // Default sort: unpurchased first, newest first
+    // Sort order
+    const sort = State.data.wishlistSort || 'newest';
+    const prioRank = { high: 3, medium: 2, low: 1 };
+
     list.sort((a, b) => {
       if (a.purchased !== b.purchased) {
         return a.purchased ? 1 : -1;
       }
-      return (b.createdAt || 0) - (a.createdAt || 0);
+
+      if (sort === 'price-asc') {
+        return (Number(a.estimatedPrice) || 0) - (Number(b.estimatedPrice) || 0);
+      } else if (sort === 'price-desc') {
+        return (Number(b.estimatedPrice) || 0) - (Number(a.estimatedPrice) || 0);
+      } else if (sort === 'priority') {
+        const pDiff = (prioRank[b.priority] || 2) - (prioRank[a.priority] || 2);
+        if (pDiff !== 0) return pDiff;
+        return (Number(b.estimatedPrice) || 0) - (Number(a.estimatedPrice) || 0);
+      } else if (sort === 'alpha') {
+        return (a.name || '').localeCompare(b.name || '');
+      } else {
+        // 'newest' default
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      }
     });
 
     return list;
@@ -191,7 +223,7 @@ const Wishlist = {
         emptyTitle = 'No matching items';
         emptyMsg = `No wishlist items matched "${Utils.escapeHtml(State.data.wishlistSearch)}".`;
       } else if (State.data.wishlistFilter === 'purchased') {
-        emptyTitle = 'No purchased items';
+        emptyTitle = 'No purchased items yet';
         emptyMsg = 'When you buy an item, mark it as acquired to track your spending.';
       }
 
@@ -212,18 +244,26 @@ const Wishlist = {
   },
 
   /**
-   * Single Wishlist item card HTML
+   * Single Wishlist item card HTML with priority indicator
    */
   renderWishlistItemHtml(item) {
     const isPurchased = !!item.purchased;
     const currency = item.currency || State.currency;
     const priceFormatted = Utils.formatCurrency(item.estimatedPrice, currency);
+    const priority = item.priority || 'medium';
+
+    let priorityBadge = '';
+    if (priority === 'high') {
+      priorityBadge = `<span class="badge" style="background: rgba(214,181,109,0.15); color: var(--accent);">★ High Priority</span>`;
+    } else if (priority === 'low') {
+      priorityBadge = `<span class="badge" style="background: rgba(102,107,118,0.14); color: var(--text-muted);">Low</span>`;
+    }
 
     let urlButton = '';
     if (item.productUrl) {
       urlButton = `
         <a href="${Utils.escapeHtml(item.productUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm" title="Open product link">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           Link
         </a>
       `;
@@ -234,8 +274,9 @@ const Wishlist = {
         <div class="wishlist-card-top">
           <div style="flex: 1; min-width: 0;">
             <div class="wishlist-name">${Utils.escapeHtml(item.name)}</div>
-            <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
               <span class="category-tag">${Utils.escapeHtml(item.category || 'General')}</span>
+              ${priorityBadge}
               ${isPurchased ? `<span class="badge" style="background: var(--success-bg); color: var(--success);">Purchased</span>` : ''}
             </div>
           </div>
@@ -278,10 +319,17 @@ const Wishlist = {
     item.purchasedAt = newPurchased ? Date.now() : null;
     item.updatedAt = Date.now();
 
+    if (newPurchased) {
+      Utils.playSound('complete');
+      Utils.triggerConfetti();
+    } else {
+      Utils.playSound('click');
+    }
+
     try {
       await DB.put(STORES.WISHLIST, item);
       await State.reloadFromDB();
-      Utils.showToast(newPurchased ? `Marked "${item.name}" as purchased!` : `Restored "${item.name}" to wishlist`, 'success');
+      Utils.showToast(newPurchased ? `Acquired "${item.name}"! 🎉` : `Restored "${item.name}" to wishlist`, 'success');
     } catch (err) {
       console.error('Failed to update wishlist item:', err);
       Utils.showToast('Failed to update wishlist item', 'error');
@@ -348,6 +396,7 @@ const Wishlist = {
           estimatedPrice,
           currency: formData.currency || State.currency,
           category: (formData.category || '').trim() || 'General',
+          priority: formData.priority || 'medium',
           productUrl: (formData.productUrl || '').trim(),
           notes: (formData.notes || '').trim(),
           updatedAt: Date.now()
@@ -355,6 +404,7 @@ const Wishlist = {
 
         await DB.put(STORES.WISHLIST, updated);
         this.activeWishlistIdToEdit = null;
+        Utils.playSound('click');
         Utils.showToast('Wishlist item updated', 'success');
       } else {
         const newItem = {
@@ -364,6 +414,7 @@ const Wishlist = {
           estimatedPrice,
           currency: formData.currency || State.currency,
           category: (formData.category || '').trim() || 'General',
+          priority: formData.priority || 'medium',
           productUrl: (formData.productUrl || '').trim(),
           notes: (formData.notes || '').trim(),
           purchased: false,
@@ -373,6 +424,7 @@ const Wishlist = {
         };
 
         await DB.add(STORES.WISHLIST, newItem);
+        Utils.playSound('click');
         Utils.showToast('Item added to wishlist', 'success');
       }
 
