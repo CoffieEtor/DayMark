@@ -1,4 +1,4 @@
-/* DAYMARK — Reminder Management Module */
+/* DAYMARK — Enhanced Reminder Management Module with Snooze & Presets */
 
 const Reminders = {
   activeReminderIdToEdit: null,
@@ -27,12 +27,13 @@ const Reminders = {
   },
 
   /**
-   * Bind reminder filter chips (All, Today, Tomorrow, Upcoming, Overdue, Completed)
+   * Bind reminder filter chips
    */
   bindFilterChips() {
     const chips = document.querySelectorAll('#reminderFiltersBar .filter-chip');
     chips.forEach(chip => {
       chip.addEventListener('click', () => {
+        Utils.playSound('click');
         chips.forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
         const filter = chip.getAttribute('data-filter');
@@ -59,6 +60,7 @@ const Reminders = {
 
     if (searchClear && searchInput) {
       searchClear.addEventListener('click', () => {
+        Utils.playSound('click');
         searchInput.value = '';
         searchClear.classList.remove('visible');
         State.setReminderSearch('');
@@ -72,9 +74,7 @@ const Reminders = {
   updateFilterCounts() {
     const reminders = State.reminders || [];
     const todayStr = Utils.getTodayDateString();
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = Utils.formatDateToISO(tomorrow);
+    const tomorrowStr = Utils.getTomorrowDateString();
 
     const counts = {
       all: reminders.filter(r => !r.completed).length,
@@ -101,9 +101,7 @@ const Reminders = {
   getVisibleReminders() {
     let list = [...(State.reminders || [])];
     const todayStr = Utils.getTodayDateString();
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = Utils.formatDateToISO(tomorrow);
+    const tomorrowStr = Utils.getTomorrowDateString();
 
     switch (State.data.reminderFilter) {
       case 'today':
@@ -136,7 +134,6 @@ const Reminders = {
       });
     }
 
-    // Sort chronologically
     list.sort((a, b) => {
       const aKey = (a.reminderDate || '9999') + (a.reminderTime || '23:59');
       const bKey = (b.reminderDate || '9999') + (b.reminderTime || '23:59');
@@ -164,6 +161,9 @@ const Reminders = {
       } else if (State.data.reminderFilter === 'overdue') {
         emptyTitle = 'No overdue reminders';
         emptyMsg = 'All your reminders are currently on schedule!';
+      } else if (State.data.reminderFilter === 'completed') {
+        emptyTitle = 'No completed reminders';
+        emptyMsg = 'Done reminders will be stored here for review.';
       }
 
       container.innerHTML = `
@@ -187,7 +187,7 @@ const Reminders = {
   },
 
   /**
-   * Single reminder HTML
+   * Single reminder HTML with quick snooze actions
    */
   renderReminderItemHtml(reminder) {
     const isCompleted = !!reminder.completed;
@@ -199,6 +199,9 @@ const Reminders = {
     else if (dateStatus === 'tomorrow') dateBadgeText = 'Tomorrow';
 
     const formattedTime = Utils.formatTime(reminder.reminderTime || '09:00');
+
+    // Snooze buttons if active and overdue/today
+    const showSnooze = !isCompleted;
 
     return `
       <div class="reminder-item ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" id="reminder-card-${reminder.id}">
@@ -222,6 +225,14 @@ const Reminders = {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               ${isCompleted ? 'Completed' : (reminder.notificationStatus === 'sent' ? 'Notified' : 'Scheduled')}
             </span>
+            ${showSnooze ? `
+              <div class="snooze-actions-row" style="display: inline-flex; gap: 4px; margin-left: 4px;" onclick="event.stopPropagation();">
+                <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size: 0.72rem; color: var(--text-muted);" 
+                        onclick="Reminders.snooze('${reminder.id}', 60)" title="Snooze for 1 hour">+1h</button>
+                <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size: 0.72rem; color: var(--text-muted);" 
+                        onclick="Reminders.snoozeToTomorrow('${reminder.id}')" title="Snooze to tomorrow">Tomorrow</button>
+              </div>
+            ` : ''}
           </div>
         </div>
 
@@ -238,6 +249,53 @@ const Reminders = {
   },
 
   /**
+   * Snooze reminder by N minutes
+   */
+  async snooze(id, minutes = 60) {
+    const reminder = State.reminders.find(r => r.id === id);
+    if (!reminder) return;
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + minutes);
+
+    reminder.reminderDate = Utils.formatDateToISO(now);
+    reminder.reminderTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    reminder.notificationStatus = 'pending';
+    reminder.updatedAt = Date.now();
+
+    Utils.playSound('click');
+    await DB.put(STORES.REMINDERS, reminder);
+    await State.reloadFromDB();
+    Utils.showToast(`Snoozed to ${Utils.formatTime(reminder.reminderTime)}`, 'info');
+
+    if (window.Notifications) {
+      Notifications.scheduleReminder(reminder);
+    }
+  },
+
+  /**
+   * Snooze reminder to tomorrow morning at 09:00
+   */
+  async snoozeToTomorrow(id) {
+    const reminder = State.reminders.find(r => r.id === id);
+    if (!reminder) return;
+
+    reminder.reminderDate = Utils.getTomorrowDateString();
+    reminder.reminderTime = '09:00';
+    reminder.notificationStatus = 'pending';
+    reminder.updatedAt = Date.now();
+
+    Utils.playSound('click');
+    await DB.put(STORES.REMINDERS, reminder);
+    await State.reloadFromDB();
+    Utils.showToast('Snoozed to tomorrow at 9:00 AM', 'info');
+
+    if (window.Notifications) {
+      Notifications.scheduleReminder(reminder);
+    }
+  },
+
+  /**
    * Toggle completion
    */
   async toggleComplete(id) {
@@ -249,12 +307,18 @@ const Reminders = {
     reminder.completedAt = newCompleted ? Date.now() : null;
     reminder.updatedAt = Date.now();
 
+    if (newCompleted) {
+      Utils.playSound('complete');
+      Utils.triggerConfetti();
+    } else {
+      Utils.playSound('click');
+    }
+
     try {
       await DB.put(STORES.REMINDERS, reminder);
       await State.reloadFromDB();
-      Utils.showToast(newCompleted ? 'Reminder completed' : 'Reminder reopened', 'success');
+      Utils.showToast(newCompleted ? 'Reminder completed! ✨' : 'Reminder reopened', 'success');
 
-      // Sync cancellation if completed
       if (newCompleted && window.Notifications) {
         Notifications.cancelScheduledReminder(id);
       }
@@ -338,6 +402,7 @@ const Reminders = {
 
         await DB.put(STORES.REMINDERS, savedReminder);
         this.activeReminderIdToEdit = null;
+        Utils.playSound('click');
         Utils.showToast('Reminder updated', 'success');
       } else {
         savedReminder = {
@@ -354,12 +419,12 @@ const Reminders = {
         };
 
         await DB.add(STORES.REMINDERS, savedReminder);
+        Utils.playSound('click');
         Utils.showToast('Reminder scheduled', 'success');
       }
 
       await State.reloadFromDB();
 
-      // Schedule or sync with push notifications
       if (window.Notifications) {
         Notifications.scheduleReminder(savedReminder);
       }
