@@ -1,4 +1,4 @@
-/* DAYMARK — Settings Module */
+/* DAYMARK — Enhanced Settings Module with Accent Themes & Sound Toggle */
 
 const Settings = {
   /**
@@ -8,9 +8,9 @@ const Settings = {
     this.bindControls();
     this.updateUI();
 
-    // Subscribe to state updates
     State.subscribe('SETTINGS_UPDATED', () => this.updateUI());
     State.subscribe('NOTIFICATION_PERMISSION_CHANGED', () => this.updateNotificationStatus());
+    State.subscribe('DATA_RELOADED', () => this.updateStorageStats());
   },
 
   /**
@@ -24,9 +24,38 @@ const Settings = {
         const newCurrency = e.target.value;
         await DB.setSetting('currency', newCurrency);
         await State.reloadFromDB();
-        Utils.showToast(`Currency updated to ${newCurrency}`, 'success');
+        Utils.playSound('click');
+        Utils.showToast(`Currency set to ${newCurrency}`, 'success');
       });
     }
+
+    // Sound toggle
+    const soundToggle = document.getElementById('settingsSoundToggle');
+    if (soundToggle) {
+      soundToggle.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        await DB.setSetting('soundEnabled', enabled);
+        await State.reloadFromDB();
+        if (enabled) Utils.playSound('complete');
+        Utils.showToast(enabled ? 'Haptic sound feedback enabled' : 'Sound feedback muted', 'info');
+      });
+    }
+
+    // Theme Accent Buttons
+    const accentBtns = document.querySelectorAll('.accent-picker-chip');
+    accentBtns.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const accent = btn.getAttribute('data-accent');
+        accentBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.documentElement.setAttribute('data-accent', accent);
+        await DB.setSetting('themeAccent', accent);
+        await State.reloadFromDB();
+        Utils.playSound('click');
+        Utils.showToast(`Theme accent changed to ${accent.charAt(0).toUpperCase() + accent.slice(1)}`, 'success');
+      });
+    });
 
     // Notification permission request
     const reqPermBtn = document.getElementById('settingsRequestPermBtn');
@@ -49,6 +78,7 @@ const Settings = {
     const exportBtn = document.getElementById('settingsExportBtn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
+        Utils.playSound('click');
         Backup.exportData();
       });
     }
@@ -58,6 +88,7 @@ const Settings = {
     const fileInput = document.getElementById('backupFileInput');
     if (importBtn) {
       importBtn.addEventListener('click', () => {
+        Utils.playSound('click');
         Backup.triggerImportDialog();
       });
     }
@@ -101,7 +132,38 @@ const Settings = {
       currencySelect.value = State.currency || 'GH₵';
     }
 
+    const soundToggle = document.getElementById('settingsSoundToggle');
+    if (soundToggle) {
+      soundToggle.checked = State.settings.soundEnabled !== false;
+    }
+
+    const currentAccent = State.settings.themeAccent || 'gold';
+    const accentBtns = document.querySelectorAll('.accent-picker-chip');
+    accentBtns.forEach(btn => {
+      if (btn.getAttribute('data-accent') === currentAccent) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
     this.updateNotificationStatus();
+    this.updateStorageStats();
+  },
+
+  /**
+   * Update storage stats
+   */
+  updateStorageStats() {
+    const statsEl = document.getElementById('settingsStorageStats');
+    if (!statsEl) return;
+
+    const tasksCount = (State.tasks || []).length;
+    const remindersCount = (State.reminders || []).length;
+    const wishlistCount = (State.wishlist || []).length;
+    const total = tasksCount + remindersCount + wishlistCount;
+
+    statsEl.textContent = `${total} total items stored locally (${tasksCount} tasks, ${remindersCount} reminders, ${wishlistCount} wishlist items).`;
   },
 
   /**
