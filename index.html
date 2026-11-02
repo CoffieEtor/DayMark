@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-accent="gold">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -32,9 +32,9 @@
     <div class="brand-wrapper" onclick="Navigation.navigateTo('dashboard')">
       <div class="brand-icon">
         <svg width="28" height="28" viewBox="0 0 512 512" fill="none">
-          <circle cx="256" cy="256" r="230" fill="#17191E" stroke="#D6B56D" stroke-width="24"/>
-          <rect x="175" y="145" width="34" height="222" rx="17" fill="#D6B56D"/>
-          <path d="M 200 145 H 270 C 330 145 365 190 365 256 C 365 322 330 367 270 367 H 200" fill="none" stroke="#D6B56D" stroke-width="34" stroke-linecap="round"/>
+          <circle cx="256" cy="256" r="230" fill="#17191E" stroke="var(--accent)" stroke-width="24"/>
+          <rect x="175" y="145" width="34" height="222" rx="17" fill="var(--accent)"/>
+          <path d="M 200 145 H 270 C 330 145 365 190 365 256 C 365 322 330 367 270 367 H 200" fill="none" stroke="var(--accent)" stroke-width="34" stroke-linecap="round"/>
           <circle cx="330" cy="190" r="16" fill="#F5F5F7"/>
         </svg>
       </div>
@@ -46,12 +46,39 @@
         <span id="headerNetworkDot" class="status-indicator-dot"></span>
         <span id="headerNetworkText">Ready</span>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="App.openTaskModal()" style="display: none; @media(min-width:640px){display:inline-flex;}">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New
-      </button>
+
+      <!-- Global "+ Add" Quick Action Dropdown -->
+      <div class="quick-add-menu-container">
+        <button id="globalAddBtn" class="btn btn-primary btn-sm" aria-label="Quick add new item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add
+        </button>
+        <div id="globalAddDropdown" class="dropdown-menu">
+          <button class="dropdown-item" data-quick-action="task">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            New Task
+          </button>
+          <button class="dropdown-item" data-quick-action="reminder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            New Reminder
+          </button>
+          <button class="dropdown-item" data-quick-action="wishlist">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Add to Wishlist
+          </button>
+          <button class="dropdown-item" data-quick-action="picker">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            Pick for me
+          </button>
+        </div>
+      </div>
     </div>
   </header>
+
+  <!-- Mobile Floating Action Button (FAB) -->
+  <button id="mobileFabBtn" class="mobile-fab" aria-label="Create new item">
+    <svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
 
   <div class="app-layout">
     <!-- ========================================================================
@@ -60,9 +87,9 @@
     <aside class="desktop-sidebar">
       <div class="sidebar-header">
         <svg width="32" height="32" viewBox="0 0 512 512" fill="none">
-          <circle cx="256" cy="256" r="230" fill="#17191E" stroke="#D6B56D" stroke-width="24"/>
-          <rect x="175" y="145" width="34" height="222" rx="17" fill="#D6B56D"/>
-          <path d="M 200 145 H 270 C 330 145 365 190 365 256 C 365 322 330 367 270 367 H 200" fill="none" stroke="#D6B56D" stroke-width="34" stroke-linecap="round"/>
+          <circle cx="256" cy="256" r="230" fill="#17191E" stroke="var(--accent)" stroke-width="24"/>
+          <rect x="175" y="145" width="34" height="222" rx="17" fill="var(--accent)"/>
+          <path d="M 200 145 H 270 C 330 145 365 190 365 256 C 365 322 330 367 270 367 H 200" fill="none" stroke="var(--accent)" stroke-width="34" stroke-linecap="round"/>
           <circle cx="330" cy="190" r="16" fill="#F5F5F7"/>
         </svg>
         <div>
@@ -104,7 +131,7 @@
       <div style="margin-top: auto; padding-top: var(--space-md); border-top: 1px solid var(--border-subtle);">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <span style="font-size: 0.78rem; color: var(--text-muted);">Ghana (GH₵)</span>
-          <span style="font-size: 0.75rem; font-weight: 600; color: var(--accent);">v1.0.0</span>
+          <span style="font-size: 0.75rem; font-weight: 600; color: var(--accent);">v1.2.0</span>
         </div>
       </div>
     </aside>
@@ -123,6 +150,21 @@
           <div id="dashDate" class="greeting-date">Monday, November 2, 2026</div>
           <h1 id="dashGreeting" class="greeting-text">Good day</h1>
           <p class="greeting-sub">Your personal command center for daily responsibilities, reminders, and intentional purchases.</p>
+        </div>
+
+        <!-- Daily Progress Bar Card -->
+        <div class="daily-progress-card">
+          <div class="daily-progress-header">
+            <span class="daily-progress-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Daily Completion
+            </span>
+            <span id="dashProgressBadge" class="daily-progress-badge">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="dashProgressFill" class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <div id="dashProgressText" class="progress-subtext">Calculating today's tasks...</div>
         </div>
 
         <!-- Quick Action Shortcuts -->
@@ -198,7 +240,6 @@
 
         <!-- Dashboard Content Sections -->
         <div class="dashboard-sections">
-          <!-- Today's Tasks Preview -->
           <div>
             <div class="section-title-row">
               <h2 class="section-heading">
@@ -210,7 +251,6 @@
             <div id="dashTodayTasksList"></div>
           </div>
 
-          <!-- Upcoming Reminders Preview -->
           <div>
             <div class="section-title-row">
               <h2 class="section-heading">
@@ -222,7 +262,6 @@
             <div id="dashRemindersList"></div>
           </div>
 
-          <!-- High Priority Glance -->
           <div>
             <div class="section-title-row">
               <h2 class="section-heading">
@@ -234,7 +273,6 @@
             <div id="dashHighPriorityList"></div>
           </div>
 
-          <!-- Wishlist Teaser & Random Picker Launch -->
           <div>
             <div class="section-title-row">
               <h2 class="section-heading">
@@ -256,7 +294,7 @@
           <div class="view-header-row">
             <div>
               <h1 class="view-title">Tasks</h1>
-              <p class="view-subtitle">Manage your daily priorities, deadlines, and project responsibilities.</p>
+              <p class="view-subtitle">Manage your daily priorities, deadlines, checklist subtasks, and responsibilities.</p>
             </div>
             <button class="btn btn-primary" onclick="App.openTaskModal()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -265,7 +303,7 @@
           </div>
         </div>
 
-        <!-- Task Filters Bar -->
+        <!-- Task Segmented Filters Bar -->
         <div id="taskFiltersBar" class="filter-bar">
           <button class="filter-chip active" data-filter="all">
             All <span class="filter-count">0</span>
@@ -288,21 +326,20 @@
         <div class="controls-row">
           <div class="search-box">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="taskSearchInput" class="search-input" placeholder="Search tasks, descriptions, or categories...">
+            <input type="text" id="taskSearchInput" class="search-input" placeholder="Search tasks, descriptions, or checklist...">
             <button id="taskSearchClear" class="search-clear-btn" aria-label="Clear search">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
 
           <select id="taskSortSelect" class="sort-select" aria-label="Sort tasks">
-            <option value="dueDate">Sort by Due Date</option>
-            <option value="priority">Sort by Priority</option>
-            <option value="created">Recently Created</option>
-            <option value="alpha">Alphabetical (A-Z)</option>
+            <option value="dueDate">Sort: Due Date</option>
+            <option value="priority">Sort: Priority Tier</option>
+            <option value="created">Sort: Recently Created</option>
+            <option value="alpha">Sort: Alphabetical (A-Z)</option>
           </select>
         </div>
 
-        <!-- Task List Items Container -->
         <div id="taskListContainer"></div>
       </section>
 
@@ -314,7 +351,7 @@
           <div class="view-header-row">
             <div>
               <h1 class="view-title">Reminders</h1>
-              <p class="view-subtitle">Timely prompts for time-sensitive commitments, recurring routines, and alerts.</p>
+              <p class="view-subtitle">Timely prompts for time-sensitive commitments with quick snooze actions.</p>
             </div>
             <button class="btn btn-primary" onclick="App.openReminderModal()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -323,7 +360,7 @@
           </div>
         </div>
 
-        <!-- Reminder Filters Bar -->
+        <!-- Reminder Segmented Filters Bar -->
         <div id="reminderFiltersBar" class="filter-bar">
           <button class="filter-chip active" data-filter="all">
             All <span class="filter-count">0</span>
@@ -345,7 +382,6 @@
           </button>
         </div>
 
-        <!-- Search Bar -->
         <div class="controls-row">
           <div class="search-box">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -356,7 +392,6 @@
           </div>
         </div>
 
-        <!-- Reminder List Container -->
         <div id="reminderListContainer"></div>
       </section>
 
@@ -401,7 +436,7 @@
           </div>
         </div>
 
-        <!-- Distinctive Feature: Random Purchase Picker Module -->
+        <!-- Random Purchase Picker Module with Budget & Category Filters -->
         <div class="picker-container" style="margin-bottom: var(--space-xl);">
           <div class="picker-glow-halo"></div>
           <div class="picker-icon-badge">
@@ -410,10 +445,24 @@
 
           <div id="pickerPrompt">
             <h2 class="picker-title">Random Purchase Selection</h2>
-            <p class="picker-subtitle">Can't decide what to purchase next? Let DAYMARK select an eligible unpurchased item from your wishlist.</p>
+            <p class="picker-subtitle">Can't decide what to purchase next? Set a budget filter or let DAYMARK roll across all eligible items.</p>
           </div>
 
-          <!-- Shuffle Reel Animation Container -->
+          <!-- Organized Picker Options (Budget & Category) -->
+          <div class="picker-controls-row">
+            <select id="pickerBudgetSelect" class="sort-select" aria-label="Filter by maximum budget">
+              <option value="0">Any Budget</option>
+              <option value="200">Max GH₵ 200</option>
+              <option value="500">Max GH₵ 500</option>
+              <option value="1000">Max GH₵ 1,000</option>
+              <option value="2500">Max GH₵ 2,500</option>
+            </select>
+            <select id="pickerCatSelect" class="sort-select" aria-label="Filter by category">
+              <option value="all">Any Category</option>
+            </select>
+          </div>
+
+          <!-- Shuffle Reel Animation -->
           <div id="pickerReel" class="picker-reel">
             <div class="reel-item">Shuffling items...</div>
           </div>
@@ -421,13 +470,13 @@
           <!-- Result Reveal Card -->
           <div id="pickerResultCard" class="picker-result-card"></div>
 
-          <!-- Empty state when no unpurchased items exist -->
+          <!-- Empty state when no eligible items exist -->
           <div id="pickerEmptyState" class="empty-state" style="display:none; max-width: 440px; margin: var(--space-md) 0;">
             <div class="empty-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
             </div>
-            <div class="empty-title">No unpurchased items available</div>
-            <div class="empty-text">Add items to your wishlist first to let DAYMARK pick for you. All current items are already purchased.</div>
+            <div class="empty-title">No matching unpurchased items</div>
+            <div id="pickerEmptyDesc" class="empty-text">Add items to your wishlist first to let DAYMARK pick for you.</div>
             <button class="btn btn-primary btn-sm" onclick="App.openWishlistModal()">+ Add Wishlist Item</button>
           </div>
 
@@ -440,11 +489,11 @@
         <!-- Wishlist Filters Bar -->
         <div id="wishlistFiltersBar" class="filter-bar">
           <button class="filter-chip active" data-filter="all">All Items</button>
-          <button class="filter-chip" data-filter="unpurchased">Unpurchased</button>
+          <button class="filter-chip" data-filter="unpurchased">To Buy</button>
           <button class="filter-chip" data-filter="purchased">Purchased</button>
         </div>
 
-        <!-- Search and Category Filter -->
+        <!-- Search, Category and Multi-Sort Controls -->
         <div class="controls-row">
           <div class="search-box">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -454,12 +503,19 @@
             </button>
           </div>
 
+          <select id="wishlistSortSelect" class="sort-select" aria-label="Sort wishlist items">
+            <option value="newest">Sort: Recently Added</option>
+            <option value="price-asc">Sort: Price (Low → High)</option>
+            <option value="price-desc">Sort: Price (High → Low)</option>
+            <option value="priority">Sort: Priority Rating</option>
+            <option value="alpha">Sort: Alphabetical (A-Z)</option>
+          </select>
+
           <select id="wishlistCategorySelect" class="sort-select" aria-label="Filter category">
             <option value="all">All Categories</option>
           </select>
         </div>
 
-        <!-- Wishlist Grid Container -->
         <div id="wishlistGridContainer" class="wishlist-grid"></div>
       </section>
 
@@ -469,18 +525,56 @@
       <section id="view-settings" class="app-view">
         <div class="view-header">
           <h1 class="view-title">Settings</h1>
-          <p class="view-subtitle">Preferences, notifications, backup, recovery, and system diagnostics.</p>
+          <p class="view-subtitle">Appearance, themes, sound effects, currency, and local data backups.</p>
         </div>
 
-        <!-- Group: Appearance -->
+        <!-- Group: Appearance & Accent Colors -->
         <div class="settings-group">
-          <div class="settings-group-header">Appearance</div>
+          <div class="settings-group-header">Appearance & Theme Accent</div>
           <div class="settings-item">
             <div class="settings-item-info">
-              <span class="settings-item-title">Dark Theme</span>
-              <span class="settings-item-desc">Premium obsidian dark aesthetic with warm gold brass accents.</span>
+              <span class="settings-item-title">Color Theme Accent</span>
+              <span class="settings-item-desc">Customize DAYMARK's highlight color palette.</span>
             </div>
-            <span class="badge" style="background: var(--accent-muted); color: var(--accent);">Default Active</span>
+          </div>
+          <div style="padding: var(--space-md); pt: 0;">
+            <div class="accent-picker-row">
+              <button class="accent-picker-chip active" data-accent="gold">
+                <span class="accent-color-dot" style="background: #D6B56D;"></span>
+                Champagne Gold
+              </button>
+              <button class="accent-picker-chip" data-accent="emerald">
+                <span class="accent-color-dot" style="background: #30D158;"></span>
+                Emerald
+              </button>
+              <button class="accent-picker-chip" data-accent="azure">
+                <span class="accent-color-dot" style="background: #0A84FF;"></span>
+                Cyber Azure
+              </button>
+              <button class="accent-picker-chip" data-accent="violet">
+                <span class="accent-color-dot" style="background: #BF5AF2;"></span>
+                Amethyst Violet
+              </button>
+              <button class="accent-picker-chip" data-accent="amber">
+                <span class="accent-color-dot" style="background: #FF9F0A;"></span>
+                Sunset Amber
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group: Sound & Tactile Feedback -->
+        <div class="settings-group">
+          <div class="settings-group-header">Audio & Tactile Feedback</div>
+          <div class="settings-item">
+            <div class="settings-item-info">
+              <span class="settings-item-title">Synthesized Sound Effects</span>
+              <span class="settings-item-desc">Play gentle melodic chimes on task completion and ticker clicks on random rolls.</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="settingsSoundToggle" checked>
+              <span class="slider-round"></span>
+            </label>
           </div>
         </div>
 
@@ -492,7 +586,7 @@
               <span class="settings-item-title">Default Currency</span>
               <span class="settings-item-desc">Primary monetary format for wishlist estimates and totals.</span>
             </div>
-            <select id="settingsCurrencySelect" class="sort-select" style="min-width: 130px;">
+            <select id="settingsCurrencySelect" class="sort-select" style="min-width: 140px;">
               <option value="GH₵">Ghana Cedi (GH₵)</option>
               <option value="$">US Dollar ($)</option>
               <option value="€">Euro (€)</option>
@@ -562,20 +656,20 @@
           </div>
         </div>
 
-        <!-- Group: About -->
+        <!-- Group: About & Storage -->
         <div class="settings-group">
-          <div class="settings-group-header">About DAYMARK</div>
+          <div class="settings-group-header">System Diagnostics & Storage</div>
           <div class="settings-item">
             <div class="settings-item-info">
-              <span class="settings-item-title">Application Identity</span>
-              <span class="settings-item-desc">DAYMARK Personal Productivity & Organization System.</span>
+              <span class="settings-item-title">Local IndexedDB Storage</span>
+              <span id="settingsStorageStats" class="settings-item-desc">Calculating items...</span>
             </div>
-            <span class="badge" style="background: var(--bg-elevated); color: var(--text-secondary);">Version 1.0.0</span>
+            <span class="badge" style="background: var(--bg-elevated); color: var(--text-secondary);">v1.2.0</span>
           </div>
           <div class="settings-item">
             <div class="settings-item-info">
               <span class="settings-item-title">Local-First Architecture</span>
-              <span class="settings-item-desc">All tasks, reminders, and wishlist data are stored securely on your device inside IndexedDB. No personal data is transmitted to third-party cloud analytics.</span>
+              <span class="settings-item-desc">100% private. All tasks, checklist items, reminders, and wishlist items are kept strictly on your device inside IndexedDB.</span>
             </div>
           </div>
         </div>
@@ -584,9 +678,7 @@
     </main>
   </div>
 
-  <!-- ========================================================================
-       Mobile Bottom Navigation Bar (Visible on screens < 840px)
-       ======================================================================== -->
+  <!-- Mobile Bottom Navigation Bar -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-view="dashboard" aria-label="Dashboard">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
@@ -616,7 +708,7 @@
        MODALS & DIALOGS
        ======================================================================== -->
 
-  <!-- Modal 1: Task Modal (Create & Edit) -->
+  <!-- Modal 1: Upgraded Task Modal with Subtasks & Presets -->
   <div id="taskModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
     <div class="modal-sheet">
       <div class="modal-drag-handle"></div>
@@ -636,34 +728,57 @@
 
           <div class="form-group">
             <label for="taskInputDesc" class="form-label">Description (Optional)</label>
-            <textarea id="taskInputDesc" class="form-textarea" placeholder="Add helpful context, checklists, or reference notes..."></textarea>
+            <textarea id="taskInputDesc" class="form-textarea" placeholder="Add helpful context or reference notes..."></textarea>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="taskInputPriority" class="form-label">Priority</label>
-              <select id="taskInputPriority" class="form-select">
-                <option value="low">Low</option>
-                <option value="normal" selected>Normal</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="taskInputCategory" class="form-label">Category</label>
-              <input type="text" id="taskInputCategory" class="form-input" placeholder="Work, Personal, Finance..." value="Personal">
+          <!-- Priority Selector Pills -->
+          <div class="form-group">
+            <label class="form-label">Priority Level</label>
+            <input type="hidden" id="taskInputPriority" value="normal">
+            <div class="prio-pills-row">
+              <button type="button" class="prio-select-pill" data-priority="low">Low</button>
+              <button type="button" class="prio-select-pill active" data-priority="normal">Normal</button>
+              <button type="button" class="prio-select-pill" data-priority="high">High</button>
+              <button type="button" class="prio-select-pill" data-priority="urgent">Urgent</button>
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="taskInputDate" class="form-label">Due Date</label>
+          <!-- Due Date & Quick Presets -->
+          <div class="form-group">
+            <label for="taskInputDate" class="form-label">Due Date</label>
+            <div class="form-row">
               <input type="date" id="taskInputDate" class="form-input">
+              <input type="time" id="taskInputTime" class="form-input" placeholder="Time">
             </div>
-            <div class="form-group">
-              <label for="taskInputTime" class="form-label">Due Time (Optional)</label>
-              <input type="time" id="taskInputTime" class="form-input">
+            <div class="preset-chips-row">
+              <button type="button" class="preset-chip date-preset-chip active" data-date-preset="today">Today</button>
+              <button type="button" class="preset-chip date-preset-chip" data-date-preset="tomorrow">Tomorrow</button>
+              <button type="button" class="preset-chip date-preset-chip" data-date-preset="3days">+3 Days</button>
+              <button type="button" class="preset-chip date-preset-chip" data-date-preset="1week">+1 Week</button>
             </div>
+          </div>
+
+          <!-- Category & Quick Suggestions -->
+          <div class="form-group">
+            <label for="taskInputCategory" class="form-label">Category</label>
+            <input type="text" id="taskInputCategory" class="form-input" placeholder="Personal, Work, Finance..." value="Personal">
+            <div class="preset-chips-row">
+              <button type="button" class="preset-chip cat-suggest-chip" data-target-input="taskInputCategory">Personal</button>
+              <button type="button" class="preset-chip cat-suggest-chip" data-target-input="taskInputCategory">Work</button>
+              <button type="button" class="preset-chip cat-suggest-chip" data-target-input="taskInputCategory">Finance</button>
+              <button type="button" class="preset-chip cat-suggest-chip" data-target-input="taskInputCategory">Health</button>
+              <button type="button" class="preset-chip cat-suggest-chip" data-target-input="taskInputCategory">Shopping</button>
+            </div>
+          </div>
+
+          <!-- Subtasks / Checklist Builder -->
+          <div class="form-group">
+            <label class="form-label">Checklist Subtasks</label>
+            <div style="display: flex; gap: var(--space-xs);">
+              <input type="text" id="taskSubtaskInput" class="form-input" placeholder="Add checklist step and tap Add...">
+              <button type="button" id="taskAddSubtaskBtn" class="btn btn-secondary btn-sm" style="min-width: 68px;">+ Add</button>
+            </div>
+            <div id="taskSubtasksListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;"></div>
           </div>
         </div>
 
@@ -675,7 +790,7 @@
     </div>
   </div>
 
-  <!-- Modal 2: Reminder Modal (Create & Edit) -->
+  <!-- Modal 2: Upgraded Reminder Modal with Time Presets -->
   <div id="reminderModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="reminderModalTitle">
     <div class="modal-sheet">
       <div class="modal-drag-handle"></div>
@@ -695,17 +810,20 @@
 
           <div class="form-group">
             <label for="reminderInputDesc" class="form-label">Details (Optional)</label>
-            <textarea id="reminderInputDesc" class="form-textarea" placeholder="Add additional details or reminders..."></textarea>
+            <textarea id="reminderInputDesc" class="form-textarea" placeholder="Add additional context or notes..."></textarea>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="reminderInputDate" class="form-label">Date <span class="req">*</span></label>
+          <div class="form-group">
+            <label class="form-label">Reminder Schedule <span class="req">*</span></label>
+            <div class="form-row">
               <input type="date" id="reminderInputDate" class="form-input" required>
+              <input type="time" id="reminderInputTime" class="form-input" value="09:00" required>
             </div>
-            <div class="form-group">
-              <label for="reminderInputTime" class="form-label">Time</label>
-              <input type="time" id="reminderInputTime" class="form-input" value="09:00">
+            <div class="preset-chips-row">
+              <button type="button" class="preset-chip time-preset-chip active" data-time-preset="09:00">Morning 9:00 AM</button>
+              <button type="button" class="preset-chip time-preset-chip" data-time-preset="13:00">Afternoon 1:00 PM</button>
+              <button type="button" class="preset-chip time-preset-chip" data-time-preset="18:00">Evening 6:00 PM</button>
+              <button type="button" class="preset-chip time-preset-chip" data-time-preset="20:30">Night 8:30 PM</button>
             </div>
           </div>
         </div>
@@ -718,7 +836,7 @@
     </div>
   </div>
 
-  <!-- Modal 3: Wishlist Modal (Create & Edit) -->
+  <!-- Modal 3: Upgraded Wishlist Modal with Priority Rating -->
   <div id="wishlistModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="wishlistModalTitle">
     <div class="modal-sheet">
       <div class="modal-drag-handle"></div>
@@ -747,6 +865,26 @@
             </div>
           </div>
 
+          <div class="preset-chips-row">
+            <button type="button" class="preset-chip cat-suggest-chip" data-target-input="wishlistInputCategory">Tech</button>
+            <button type="button" class="preset-chip cat-suggest-chip" data-target-input="wishlistInputCategory">Workspace</button>
+            <button type="button" class="preset-chip cat-suggest-chip" data-target-input="wishlistInputCategory">Home</button>
+            <button type="button" class="preset-chip cat-suggest-chip" data-target-input="wishlistInputCategory">Books</button>
+            <button type="button" class="preset-chip cat-suggest-chip" data-target-input="wishlistInputCategory">Clothing</button>
+            <button type="button" class="preset-chip cat-suggest-chip" data-target-input="wishlistInputCategory">Travel</button>
+          </div>
+
+          <!-- Priority / Desire Rating -->
+          <div class="form-group">
+            <label class="form-label">Purchase Priority / Desire</label>
+            <input type="hidden" id="wishlistInputPriority" value="medium">
+            <div class="preset-chips-row">
+              <button type="button" class="preset-chip wish-prio-pill" data-wish-prio="low">Low Need</button>
+              <button type="button" class="preset-chip wish-prio-pill active" data-wish-prio="medium">Medium Priority</button>
+              <button type="button" class="preset-chip wish-prio-pill" data-wish-prio="high">★ High / Top Dream</button>
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="wishlistInputUrl" class="form-label">Product Link / URL (Optional)</label>
             <input type="url" id="wishlistInputUrl" class="form-input" placeholder="https://store.example.com/product">
@@ -759,7 +897,7 @@
 
           <div class="form-group">
             <label for="wishlistInputNotes" class="form-label">Notes (Optional)</label>
-            <input type="text" id="wishlistInputNotes" class="form-input" placeholder="e.g., Wait for Black Friday discount">
+            <input type="text" id="wishlistInputNotes" class="form-input" placeholder="e.g., Wait for discount or check warranty">
           </div>
         </div>
 
@@ -794,7 +932,7 @@
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
   <!-- ========================================================================
-       Application Scripts (Vanilla JS Architecture)
+       Application Scripts
        ======================================================================== -->
   <script src="js/utilities.js"></script>
   <script src="js/database.js"></script>
