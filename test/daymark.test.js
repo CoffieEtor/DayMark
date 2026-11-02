@@ -308,7 +308,42 @@ test('4. Data Backup & Recovery Validation', (t) => {
 });
 
 test('5. Backend API Endpoints & Notification Architecture', async (t) => {
-  const baseUrl = 'http://localhost:3001';
+  const { spawn } = require('child_process');
+  const baseUrl = 'http://127.0.0.1:3001';
+
+  // Check if server is already running, or spawn it for test
+  let serverProcess = null;
+  let isRunning = false;
+  try {
+    const res = await fetch(`${baseUrl}/api/health`);
+    if (res.ok) isRunning = true;
+  } catch (e) {
+    isRunning = false;
+  }
+
+  if (!isRunning) {
+    serverProcess = spawn('node', ['server/server.js'], {
+      cwd: path.join(__dirname, '..'),
+      stdio: 'ignore'
+    });
+    // Wait for server to boot up
+    for (let i = 0; i < 20; i++) {
+      await new Promise(r => setTimeout(r, 150));
+      try {
+        const res = await fetch(`${baseUrl}/api/health`);
+        if (res.ok) {
+          isRunning = true;
+          break;
+        }
+      } catch (e) {}
+    }
+  }
+
+  t.after(() => {
+    if (serverProcess) {
+      serverProcess.kill();
+    }
+  });
 
   await t.test('Health endpoint returns healthy status', async () => {
     const res = await fetch(`${baseUrl}/api/health`);
