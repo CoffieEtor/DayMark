@@ -1,4 +1,4 @@
-/* DAYMARK — Task Management Module */
+/* DAYMARK — Enhanced Task Management Module with Subtasks & Presets */
 
 const Tasks = {
   activeTaskIdToEdit: null,
@@ -31,12 +31,13 @@ const Tasks = {
   },
 
   /**
-   * Bind task filter chips (All, Today, Upcoming, Overdue, Completed)
+   * Bind task filter chips
    */
   bindFilterChips() {
     const chips = document.querySelectorAll('#taskFiltersBar .filter-chip');
     chips.forEach(chip => {
       chip.addEventListener('click', () => {
+        Utils.playSound('click');
         chips.forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
         const filter = chip.getAttribute('data-filter');
@@ -64,6 +65,7 @@ const Tasks = {
 
     if (searchClear && searchInput) {
       searchClear.addEventListener('click', () => {
+        Utils.playSound('click');
         searchInput.value = '';
         searchClear.classList.remove('visible');
         State.setTaskSearch('');
@@ -72,6 +74,7 @@ const Tasks = {
 
     if (sortSelect) {
       sortSelect.addEventListener('change', (e) => {
+        Utils.playSound('click');
         State.setTaskSort(e.target.value);
       });
     }
@@ -125,7 +128,6 @@ const Tasks = {
         break;
       case 'all':
       default:
-        // Default 'all' shows open tasks
         list = list.filter(t => !t.completed);
         break;
     }
@@ -137,7 +139,8 @@ const Tasks = {
         const titleMatch = (t.title || '').toLowerCase().includes(query);
         const descMatch = (t.description || '').toLowerCase().includes(query);
         const catMatch = (t.category || '').toLowerCase().includes(query);
-        return titleMatch || descMatch || catMatch;
+        const subtasksMatch = (t.subtasks || []).some(st => (st.text || '').toLowerCase().includes(query));
+        return titleMatch || descMatch || catMatch || subtasksMatch;
       });
     }
 
@@ -155,7 +158,6 @@ const Tasks = {
       } else if (sort === 'alpha') {
         return (a.title || '').localeCompare(b.title || '');
       } else {
-        // Default: due date earliest first (nulls at end), then by priority
         const aDate = a.dueDate ? (a.dueDate + (a.dueTime || '23:59')) : '9999';
         const bDate = b.dueDate ? (b.dueDate + (b.dueTime || '23:59')) : '9999';
         const dateComp = aDate.localeCompare(bDate);
@@ -183,7 +185,7 @@ const Tasks = {
         emptyTitle = 'No matching tasks';
         emptyMsg = `No tasks matched your search "${Utils.escapeHtml(State.data.taskSearch)}".`;
       } else if (State.data.taskFilter === 'completed') {
-        emptyTitle = 'No completed tasks';
+        emptyTitle = 'No completed tasks yet';
         emptyMsg = 'When you finish a task, it will be kept here for reference.';
       } else if (State.data.taskFilter === 'overdue') {
         emptyTitle = 'No overdue tasks';
@@ -211,7 +213,7 @@ const Tasks = {
   },
 
   /**
-   * Render single task item HTML
+   * Render single task item HTML with subtasks checklist support
    */
   renderTaskItemHtml(task) {
     const isCompleted = !!task.completed;
@@ -221,27 +223,50 @@ const Tasks = {
     if (task.dueDate) {
       let statusClass = '';
       let dateIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-      let label = Utils.formatShortDate(task.dueDate);
+      const relLabel = Utils.getRelativeDateLabel(task.dueDate, task.dueTime);
 
       if (!isCompleted && dateStatus === 'overdue') {
         statusClass = 'overdue';
-        label = `Overdue • ${label}`;
       } else if (dateStatus === 'today') {
         statusClass = 'today';
-        label = 'Today';
-      } else if (dateStatus === 'tomorrow') {
-        label = 'Tomorrow';
       }
 
-      if (task.dueTime) {
-        label += ` at ${Utils.formatTime(task.dueTime)}`;
-      }
-
-      dateChipHtml = `<span class="meta-chip ${statusClass}">${dateIcon}${Utils.escapeHtml(label)}</span>`;
+      dateChipHtml = `<span class="meta-chip ${statusClass}">${dateIcon}${Utils.escapeHtml(relLabel)}</span>`;
     }
 
     const priorityBadge = `<span class="badge badge-${task.priority || 'normal'}">${task.priority || 'normal'}</span>`;
     const categoryTag = task.category ? `<span class="category-tag">${Utils.escapeHtml(task.category)}</span>` : '';
+
+    // Subtasks summary and checklist
+    const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+    let subtasksHtml = '';
+    if (subtasks.length > 0) {
+      const completedSubtasks = subtasks.filter(st => st.completed).length;
+      const pct = Math.round((completedSubtasks / subtasks.length) * 100);
+
+      subtasksHtml = `
+        <div class="task-subtasks-container" style="margin-top: 8px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">
+            <span>Checklist • ${completedSubtasks}/${subtasks.length}</span>
+            <span>${pct}%</span>
+          </div>
+          <div class="progress-bar-bg" style="height: 4px; border-radius: 2px; background: rgba(255,255,255,0.06); overflow: hidden; margin-bottom: 6px;">
+            <div class="progress-bar-fill" style="width: ${pct}%; height: 100%; background: var(--accent); transition: width 0.3s ease;"></div>
+          </div>
+          <div class="subtasks-mini-list" style="display: flex; flex-direction: column; gap: 4px;">
+            ${subtasks.map(st => `
+              <div class="subtask-row" style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: ${st.completed ? 'var(--text-muted)' : 'var(--text-secondary)'};">
+                <button class="checkbox-btn" style="width: 16px; height: 16px; min-width: 16px; ${st.completed ? 'background: var(--accent); border-color: var(--accent);' : ''}" 
+                        onclick="event.stopPropagation(); Tasks.toggleSubtask('${task.id}', '${st.id}')">
+                  <svg viewBox="0 0 24 24" style="width: 10px; height: 10px; ${st.completed ? 'opacity: 1; transform: scale(1);' : 'opacity: 0;'}"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <span style="${st.completed ? 'text-decoration: line-through;' : ''}">${Utils.escapeHtml(st.text)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
 
     return `
       <div class="task-item ${isCompleted ? 'completed' : ''}" id="task-card-${task.id}">
@@ -259,6 +284,7 @@ const Tasks = {
             ${dateChipHtml}
             ${categoryTag}
           </div>
+          ${subtasksHtml}
         </div>
 
         <div class="item-actions">
@@ -274,7 +300,7 @@ const Tasks = {
   },
 
   /**
-   * Toggle task completion with smooth micro-animation
+   * Toggle task completion with sound and visual feedback
    */
   async toggleComplete(id) {
     const task = State.tasks.find(t => t.id === id);
@@ -285,7 +311,13 @@ const Tasks = {
     task.completedAt = newCompleted ? Date.now() : null;
     task.updatedAt = Date.now();
 
-    // Optimistic UI update
+    if (newCompleted) {
+      Utils.playSound('complete');
+      Utils.triggerConfetti();
+    } else {
+      Utils.playSound('click');
+    }
+
     const cardEl = document.getElementById(`task-card-${id}`);
     if (cardEl) {
       cardEl.classList.toggle('completed', newCompleted);
@@ -296,11 +328,33 @@ const Tasks = {
     try {
       await DB.put(STORES.TASKS, task);
       await State.reloadFromDB();
-      Utils.showToast(newCompleted ? 'Task completed' : 'Task reopened', 'success');
+      Utils.showToast(newCompleted ? 'Task completed! ✨' : 'Task reopened', 'success');
     } catch (err) {
       console.error('Failed to update task:', err);
       Utils.showToast('Failed to save task update', 'error');
       await State.reloadFromDB();
+    }
+  },
+
+  /**
+   * Toggle individual subtask item
+   */
+  async toggleSubtask(taskId, subtaskId) {
+    const task = State.tasks.find(t => t.id === taskId);
+    if (!task || !Array.isArray(task.subtasks)) return;
+
+    const subtask = task.subtasks.find(st => st.id === subtaskId);
+    if (!subtask) return;
+
+    subtask.completed = !subtask.completed;
+    task.updatedAt = Date.now();
+    Utils.playSound('click');
+
+    try {
+      await DB.put(STORES.TASKS, task);
+      await State.reloadFromDB();
+    } catch (err) {
+      console.error('Failed to toggle subtask:', err);
     }
   },
 
@@ -352,7 +406,6 @@ const Tasks = {
 
     try {
       if (this.activeTaskIdToEdit) {
-        // Updating existing task
         const existing = State.tasks.find(t => t.id === this.activeTaskIdToEdit);
         if (!existing) return false;
 
@@ -364,14 +417,15 @@ const Tasks = {
           dueDate: formData.dueDate || null,
           dueTime: formData.dueTime || null,
           category: (formData.category || '').trim() || 'General',
+          subtasks: Array.isArray(formData.subtasks) ? formData.subtasks : (existing.subtasks || []),
           updatedAt: Date.now()
         };
 
         await DB.put(STORES.TASKS, updatedTask);
         this.activeTaskIdToEdit = null;
+        Utils.playSound('click');
         Utils.showToast('Task updated successfully', 'success');
       } else {
-        // Creating new task
         const newTask = {
           id: Utils.generateId(),
           title,
@@ -380,6 +434,7 @@ const Tasks = {
           dueDate: formData.dueDate || null,
           dueTime: formData.dueTime || null,
           category: (formData.category || '').trim() || 'General',
+          subtasks: Array.isArray(formData.subtasks) ? formData.subtasks : [],
           completed: false,
           completedAt: null,
           createdAt: Date.now(),
@@ -387,6 +442,7 @@ const Tasks = {
         };
 
         await DB.add(STORES.TASKS, newTask);
+        Utils.playSound('click');
         Utils.showToast('New task created', 'success');
       }
 
