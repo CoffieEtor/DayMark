@@ -1,0 +1,169 @@
+/* DAYMARK — Responsive & Platform Optimizations */
+
+/* ==========================================================================
+   Mobile-First & iPhone Safe Area Handling
+   ========================================================================== */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: min(0vmin, env(safe-area-inset-left));
+    padding-right: min(0vmin, env(safe-area-inset-right));
+  }
+}
+
+/* Touch targets: ensure interactive elements have at least 44x44 touch area */
+@media (pointer: coarse) {
+  .btn,
+  .quick-action-btn,
+  .nav-item,
+  .filter-chip,
+  .checkbox-btn {
+    min-height: 44px;
+  }
+
+  .checkbox-btn {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+  }
+}
+
+/* Prevent text zoom in landscape or on input focus on iOS */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Mobile specific layout tweaks (< 640px) */
+@media (max-width: 639px) {
+  .main-content {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+    padding-top: calc(var(--header-height) + var(--space-xs));
+  }
+
+  .greeting-hero {
+    padding: var(--space-md);
+  }
+
+  .greeting-text {
+    font-size: 1.35rem;
+  }
+
+  .view-title {
+    font-size: 1.35rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: var(--space-sm);
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .quick-action-btn {
+    font-size: 0.82rem;
+    padding: 10px var(--space-xs);
+  }
+
+  .task-item, .reminder-item {
+    padding: 12px var(--space-sm);
+  }
+
+  .picker-container {
+    padding: var(--space-lg) var(--space-sm);
+  }
+
+  .picker-title {
+    font-size: 1.35rem;
+  }
+
+  .picker-btn-action {
+    width: 100%;
+    padding: 14px 20px;
+  }
+
+  .modal-sheet {
+    max-height: 85vh;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+/* Medium Screens & Tablets (640px to 839px) */
+@media (min-width: 640px) and (max-width: 839px) {
+  .main-content {
+    padding: var(--space-lg);
+    padding-top: calc(var(--header-height) + var(--space-md));
+  }
+}
+
+/* ==========================================================================
+   Desktop Layout (>= 840px)
+   ========================================================================== */
+@media (min-width: 840px) {
+  body {
+    padding-bottom: 0;
+  }
+
+  .desktop-sidebar {
+    display: flex;
+  }
+
+  .bottom-nav {
+    display: none;
+  }
+
+  .app-header {
+    left: var(--sidebar-width);
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
+  }
+
+  .main-content {
+    margin-left: var(--sidebar-width);
+    padding: var(--space-xl);
+    padding-top: calc(var(--header-height) + var(--space-xl));
+    max-width: 1040px;
+  }
+
+  .dashboard-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+
+  .dashboard-sections .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .quick-actions-bar {
+    justify-content: flex-start;
+  }
+
+  .quick-action-btn {
+    flex: 0 1 auto;
+    min-width: 160px;
+  }
+
+  .picker-container {
+    min-height: 520px;
+    padding: var(--space-3xl) var(--space-xl);
+  }
+}
+
+/* Extra large screens (>= 1200px) */
+@media (min-width: 1200px) {
+  .main-content {
+    max-width: 1140px;
+  }
+}
