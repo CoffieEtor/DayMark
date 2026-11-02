@@ -1,5 +1,7 @@
 /* DAYMARK Server — Push Notification Sender */
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const webpush = require('web-push');
 const store = require('./database');
 
