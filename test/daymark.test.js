@@ -68,7 +68,7 @@ test('1. Utilities — Currency, Date, and HTML Sanitization', async (t) => {
 });
 
 test('2. IndexedDB — CRUD Operations & Seeding', async (t) => {
-  const db = new DaymarkDatabase();
+  const db = global.DB;
   await db.init();
 
   await t.test('Database initializes stores properly', async () => {
@@ -306,3 +306,82 @@ test('4. Data Backup & Recovery Validation', (t) => {
   };
   assert.equal(Backup.validateBackup(invalidWishlist).isValid, false);
 });
+
+test('5. Backend API Endpoints & Notification Architecture', async (t) => {
+  const baseUrl = 'http://localhost:3001';
+
+  await t.test('Health endpoint returns healthy status', async () => {
+    const res = await fetch(`${baseUrl}/api/health`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.status, 'healthy');
+    assert.equal(body.vapidConfigured, true);
+  });
+
+  await t.test('VAPID public key endpoint provides valid key', async () => {
+    const res = await fetch(`${baseUrl}/api/vapid-public-key`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.ok(body.publicKey);
+    assert.equal(typeof body.publicKey, 'string');
+    assert.ok(body.publicKey.length > 50);
+  });
+
+  await t.test('Push subscription register and unsubscribe workflow', async () => {
+    const fakeSub = {
+      endpoint: 'https://fcm.googleapis.com/fcm/send/fake-test-token-12345',
+      keys: {
+        p256dh: 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QT9AcUbVYO2-0U0waLF2CtQZb8ukAMvGA6z_0U0waLF2CtQZ',
+        auth: 'tBHItJI5svbpez7KI4CCXg'
+      }
+    };
+
+    // Subscribe
+    const subRes = await fetch(`${baseUrl}/api/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: fakeSub })
+    });
+    assert.equal(subRes.status, 201);
+    const subBody = await subRes.json();
+    assert.equal(subBody.success, true);
+
+    // Verify stored
+    const healthRes = await fetch(`${baseUrl}/api/health`);
+    const healthBody = await healthRes.json();
+    assert.ok(healthBody.activeSubscriptions >= 1);
+
+    // Unsubscribe
+    const unsubRes = await fetch(`${baseUrl}/api/unsubscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: fakeSub.endpoint })
+    });
+    assert.equal(unsubRes.status, 200);
+  });
+
+  await t.test('Reminder scheduling and cancellation in backend', async () => {
+    const fakeReminder = {
+      id: 'test-rem-schedule-99',
+      title: 'Scheduled reminder test',
+      description: 'Test description',
+      reminderDate: '2026-11-20',
+      reminderTime: '14:00'
+    };
+
+    const schedRes = await fetch(`${baseUrl}/api/reminders/schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reminder: fakeReminder })
+    });
+    assert.equal(schedRes.status, 201);
+
+    const cancelRes = await fetch(`${baseUrl}/api/reminders/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reminderId: fakeReminder.id })
+    });
+    assert.equal(cancelRes.status, 200);
+  });
+});
+
