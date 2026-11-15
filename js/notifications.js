@@ -131,6 +131,10 @@ const Notifications = {
       if (subscription) {
         // Send subscription to server
         await this.sendSubscriptionToServer(subscription);
+        // Register reminders created before this device subscribed
+        if (window.State && Array.isArray(State.reminders)) {
+          State.reminders.filter(r => !r.completed).forEach(r => this.scheduleReminder(r));
+        }
         await DB.setSetting('pushSubscription', JSON.stringify(subscription));
       }
 
@@ -181,14 +185,30 @@ const Notifications = {
   /**
    * Schedule reminder on server
    */
+  async getEndpoint() {
+    try {
+      if (!this.swRegistration) return null;
+      const sub = await this.swRegistration.pushManager.getSubscription();
+      return sub ? sub.endpoint : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
   async scheduleReminder(reminder) {
     if (!reminder || reminder.completed) return;
 
     try {
+      // The server only delivers a reminder to the device that created it, and needs the
+      // device's UTC offset because reminder times are entered in local time.
+      const endpoint = await this.getEndpoint();
+      if (!endpoint) return;
       await fetch('/api/reminders/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reminder })
+        body: JSON.stringify({
+          reminder: { ...reminder, endpoint, tzOffset: new Date().getTimezoneOffset() }
+        })
       });
     } catch (e) {
       // Backend not running; client monitor handles it while open
@@ -200,10 +220,11 @@ const Notifications = {
    */
   async cancelScheduledReminder(reminderId) {
     try {
+      const endpoint = await this.getEndpoint();
       await fetch('/api/reminders/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reminderId })
+        body: JSON.stringify({ reminderId, endpoint })
       });
     } catch (e) {
       // Handled silently
@@ -221,7 +242,11 @@ const Notifications = {
 
     // 1. Try sending via backend push
     try {
-      const res = await fetch('/api/test-push', { method: 'POST' });
+      const res = await fetch('/api/test-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: await this.getEndpoint() })
+      });
       if (res.ok) {
         Utils.showToast('Test push sent via server!', 'success');
         return;
