@@ -322,12 +322,9 @@ test('5. Backend API Endpoints & Notification Architecture', async (t) => {
   }
 
   if (!isRunning) {
-    // Throwaway keys: real keys live in server/.env, which is not committed.
-    const keys = require('web-push').generateVAPIDKeys();
     serverProcess = spawn('node', ['server/server.js'], {
       cwd: path.join(__dirname, '..'),
-      stdio: 'ignore',
-      env: { ...process.env, VAPID_PUBLIC_KEY: keys.publicKey, VAPID_PRIVATE_KEY: keys.privateKey }
+      stdio: 'ignore'
     });
     // Wait for server to boot up
     for (let i = 0; i < 20; i++) {
