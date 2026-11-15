@@ -40,3 +40,10 @@ which runs as Vercel serverless functions and stores data in Redis.
 - Existing devices: open the app once after deploying so it re-registers its subscription and reminders.
 - `server/` is the old local Express server, kept for local development (`npm start`, needs its own `server/.env`).
 - Delivery delay with the GitHub Actions trigger is typically 5–15 minutes.
+
+## Troubleshooting
+
+- **`Cannot read properties of undefined (reading 'fsPath')` / "No entrypoint found":** Vercel auto-detected the
+  repo as an Express app because `express` is in `package.json`. `vercel.json` sets `"framework": null` to
+  prevent that. In Project → Settings → Build & Development, make sure Framework Preset is *Other* and no
+  Build/Output/Install override is set.
