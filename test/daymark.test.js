@@ -478,3 +478,51 @@ test('6. Enhanced Features — Subtasks, Wishlist Multi-Sort & Picker Budget Con
 });
 
 
+
+test('7. Profile: name suggestions, display name, persistence, demo-data cleanup', async (t) => {
+  const profileCode = fs.readFileSync(path.join(__dirname, '../js/profile.js'), 'utf8');
+  eval(profileCode);
+  const db = global.DB;
+  await db.init();
+
+  await t.test('suggestions are built from the full name', () => {
+    const s = Profile.suggestions('  michael   coffie ');
+    assert.deepEqual(s.slice(0, 2), ['michael', 'michael coffie']);
+    assert.ok(Profile.suggestions('Ama Mensah').includes('Dr Mensah'));
+    assert.deepEqual(Profile.suggestions('Kofi').slice(0, 2), ['Kofi', 'Mr Kofi']);
+    assert.deepEqual(Profile.suggestions('   '), []);
+  });
+
+  await t.test('displayName prefers address, falls back to first name', () => {
+    Profile.data = { name: 'Ama Mensah', addressAs: '', onboarded: false };
+    assert.equal(Profile.displayName(), 'Ama');
+    Profile.data.addressAs = 'Dr Mensah';
+    assert.equal(Profile.displayName(), 'Dr Mensah');
+    Profile.data = { name: '', addressAs: '', onboarded: false };
+    assert.equal(Profile.displayName(), '');
+  });
+
+  await t.test('profile persists across loads', async () => {
+    await db.clearAll();
+    await Profile.save(db, { name: ' Ama  Mensah ', addressAs: 'Boss', onboarded: true });
+    Profile.data = { name: '', addressAs: '', onboarded: false };
+    const loaded = await Profile.load(db);
+    assert.deepEqual(loaded, { name: 'Ama Mensah', addressAs: 'Boss', onboarded: true });
+  });
+
+  await t.test('removeSampleData deletes only untouched demo items', async () => {
+    await db.clearAll();
+    await db.seedInitialDataIfEmpty();
+    const mine = { id: 'mine1', title: 'Call the bank', createdAt: 1, updatedAt: 1, completed: false };
+    await db.add(STORES.TASKS, mine);
+    // user edited one demo task -> must be kept
+    const demo = (await db.getAll(STORES.TASKS)).find(x => x.title.startsWith('Welcome to DAYMARK'));
+    await db.put(STORES.TASKS, { ...demo, updatedAt: demo.createdAt + 5000 });
+    const removed = await Profile.removeSampleData(db);
+    assert.equal(removed, 7);
+    const left = (await db.getAll(STORES.TASKS)).map(x => x.title).sort();
+    assert.deepEqual(left, ['Call the bank', 'Welcome to DAYMARK — Organize your day']);
+    assert.equal((await db.getAll(STORES.REMINDERS)).length, 0);
+    assert.equal((await db.getAll(STORES.WISHLIST)).length, 0);
+  });
+});

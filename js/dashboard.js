@@ -49,7 +49,8 @@ const Dashboard = {
     const dateEl = document.getElementById('dashDate');
 
     if (greetingEl) {
-      greetingEl.textContent = Utils.getTimeOfDayGreeting();
+      const who = Profile.displayName();
+      greetingEl.textContent = Utils.getTimeOfDayGreeting() + (who ? ', ' + who : '');
     }
     if (dateEl) {
       dateEl.textContent = Utils.formatFullDate(new Date());
@@ -68,6 +69,14 @@ const Dashboard = {
     const tasks = State.tasks || [];
     const todayStr = Utils.getTodayDateString();
     const todayTasks = tasks.filter(t => t.dueDate === todayStr);
+
+    if (tasks.length === 0) {
+      // Brand-new user: nothing planned yet, so don't claim 100% done
+      barFill.style.width = '0%';
+      textEl.textContent = 'Nothing planned yet — add your first task to get started.';
+      if (badgeEl) badgeEl.textContent = '0%';
+      return;
+    }
 
     if (todayTasks.length === 0) {
       barFill.style.width = '100%';

@@ -23,8 +23,22 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/onboarding.css">
 </head>
 <body>
+
+  <!-- Splash screen (shown on every launch) -->
+  <div id="splash" role="status" aria-label="Loading DAYMARK">
+    <svg class="splash-logo" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+      <circle cx="256" cy="256" r="230" fill="#17191E" stroke="#D6B56D" stroke-width="24"/>
+      <rect x="175" y="145" width="34" height="222" rx="17" fill="#D6B56D"/>
+      <path d="M 200 145 H 270 C 330 145 365 190 365 256 C 365 322 330 367 270 367 H 200" fill="none" stroke="#D6B56D" stroke-width="34" stroke-linecap="round"/>
+      <circle cx="330" cy="190" r="16" fill="#F5F5F7"/>
+    </svg>
+    <div class="splash-word">DAY<span>MARK</span></div>
+    <div id="splashTag" class="splash-tag">Plan your day. Own your time.</div>
+    <div class="splash-bar" aria-hidden="true"></div>
+  </div>
 
   <!-- ========================================================================
        App Header (Sticky Top Bar)
@@ -530,6 +544,32 @@
         </div>
 
         <!-- Group: Appearance & Accent Colors -->
+                <!-- Group: Profile -->
+        <div class="settings-group">
+          <div class="settings-group-header">Profile</div>
+          <div class="settings-item">
+            <div class="settings-item-info">
+              <span class="settings-item-title">Your name</span>
+              <span class="settings-item-desc">Used for your profile and backups.</span>
+            </div>
+            <input id="settingsNameInput" class="search-input" type="text" maxlength="40" autocomplete="name" style="min-width: 160px; padding-left: var(--space-md);" aria-label="Your name">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-info">
+              <span class="settings-item-title">Address me as</span>
+              <span class="settings-item-desc">How DAYMARK greets you, e.g. “Michael” or “Dr Coffie”.</span>
+            </div>
+            <input id="settingsAddressInput" class="search-input" type="text" maxlength="40" autocomplete="off" style="min-width: 160px; padding-left: var(--space-md);" aria-label="Address me as">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-info">
+              <span class="settings-item-title">Welcome tour</span>
+              <span class="settings-item-desc">Replay the quick introduction to DAYMARK.</span>
+            </div>
+            <button id="settingsTourBtn" class="btn btn-secondary btn-sm">Replay tour</button>
+          </div>
+        </div>
+
         <div class="settings-group">
           <div class="settings-group-header">Appearance & Theme Accent</div>
           <div class="settings-item">
@@ -963,6 +1003,9 @@
   <script src="js/wishlist.js"></script>
   <script src="js/picker.js"></script>
   <script src="js/notifications.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/session.js"></script>
+  <script src="js/onboarding.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/backup.js"></script>
   <script src="js/app.js"></script>

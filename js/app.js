@@ -12,12 +12,15 @@ const App = {
 
     try {
       await DB.init();
-      await DB.seedInitialDataIfEmpty();
+      await Profile.load(DB);
+      // New users start with an empty app (no demo data); the welcome flow collects their name.
+      Splash.setGreeting(Profile.data.onboarded && Profile.displayName() ? `Welcome back, ${Profile.displayName()}` : 'Plan your day. Own your time.');
       await State.reloadFromDB();
 
       this.registerServiceWorker();
       this.initNetworkMonitoring();
 
+      Session.restoreView();
       Navigation.init();
       Dashboard.init();
       Tasks.init();
@@ -32,10 +35,23 @@ const App = {
       this.bindSubtaskBuilder();
       this.bindPresetButtons();
 
+      // Put search/filter choices and scroll position back, then start remembering changes
+      Session.restoreControls();
+      Session.track();
+      requestAnimationFrame(() => setTimeout(() => Session.restoreScroll(), 60));
+
       console.log('[DAYMARK] Application successfully initialized.');
     } catch (err) {
       console.error('[DAYMARK] Initialization error:', err);
       Utils.showToast('Initialization warning: ' + err.message, 'error');
+    }
+
+    // Splash is shown on every launch; first-time users continue into the welcome flow
+    if (!Profile.data.onboarded) {
+      Onboarding.start();
+      Splash.hide(1300);
+    } else {
+      Splash.hide();
     }
   },
 

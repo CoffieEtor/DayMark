@@ -17,6 +17,27 @@ const Settings = {
    * Bind settings inputs and buttons
    */
   bindControls() {
+    // Profile: name, how to be addressed, replay tour
+    const nameInput = document.getElementById('settingsNameInput');
+    const addrInput = document.getElementById('settingsAddressInput');
+    const saveProfile = async () => {
+      const name = Profile.clean(nameInput.value) || Profile.data.name;
+      const addressAs = Profile.clean(addrInput.value) || name.split(' ')[0];
+      await Profile.save(DB, { name, addressAs, onboarded: true });
+      nameInput.value = Profile.data.name;
+      addrInput.value = Profile.data.addressAs;
+      Dashboard.renderGreeting();
+      Utils.showToast('Profile saved', 'success');
+    };
+    if (nameInput && addrInput) {
+      nameInput.value = Profile.data.name;
+      addrInput.value = Profile.data.addressAs;
+      nameInput.addEventListener('change', saveProfile);
+      addrInput.addEventListener('change', saveProfile);
+    }
+    const tourBtn = document.getElementById('settingsTourBtn');
+    if (tourBtn) tourBtn.addEventListener('click', () => Onboarding.start({ tourOnly: true }));
+
     // Currency selector
     const currencySelect = document.getElementById('settingsCurrencySelect');
     if (currencySelect) {
