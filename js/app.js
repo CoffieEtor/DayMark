@@ -13,6 +13,13 @@ const App = {
     try {
       await DB.init();
       await Profile.load(DB);
+
+      // First-time users: show the welcome flow right away (the app finishes loading behind it)
+      // instead of waiting for every module to initialise first.
+      if (!Profile.data.onboarded) {
+        Onboarding.start();
+        Splash.hide(600);
+      }
       // New users start with an empty app (no demo data); the welcome flow collects their name.
       Splash.setGreeting(Profile.data.onboarded && Profile.displayName() ? `Welcome back, ${Profile.displayName()}` : 'Plan your day. Own your time.');
       await State.reloadFromDB();
@@ -46,13 +53,8 @@ const App = {
       Utils.showToast('Initialization warning: ' + err.message, 'error');
     }
 
-    // Splash is shown on every launch; first-time users continue into the welcome flow
-    if (!Profile.data.onboarded) {
-      Onboarding.start();
-      Splash.hide(1300);
-    } else {
-      Splash.hide();
-    }
+    // Splash is shown on every launch (first-time users already had it hidden above)
+    if (Profile.data.onboarded) Splash.hide(800);
   },
 
   /**

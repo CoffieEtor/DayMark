@@ -10,13 +10,13 @@ const Splash = {
   },
 
   /** Hide after at least `minMs` since page load so the animation is seen but never feels slow. */
-  hide(minMs = 1100) {
+  hide(minMs = 800) {
     const el = document.getElementById('splash');
     if (!el) return;
     const wait = Math.max(0, minMs - (Date.now() - this.startedAt));
     setTimeout(() => {
       el.classList.add('hide');
-      setTimeout(() => el.remove(), 600);
+      setTimeout(() => el.remove(), 400);
     }, wait);
   }
 };

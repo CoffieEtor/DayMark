@@ -12,7 +12,7 @@
   gap: 14px;
   background: radial-gradient(ellipse at 50% 38%, #1d2027 0%, var(--bg-main) 62%);
   padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
-  transition: opacity 0.45s ease, visibility 0.45s;
+  transition: opacity 0.3s ease, visibility 0.3s;
 }
 
 #splash.hide {
