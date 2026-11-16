@@ -3,7 +3,7 @@
  * Provides offline caching, network-resilient asset delivery, and Web Push notifications.
  */
 
-const CACHE_NAME = 'daymark-cache-v3';
+const CACHE_NAME = 'daymark-cache-v4';
 
 const STATIC_ASSETS = [
   './',
@@ -23,6 +23,7 @@ const STATIC_ASSETS = [
   './js/picker.js',
   './js/notifications.js',
   './js/settings.js',
+  './js/install.js',
   './js/backup.js',
   './js/utilities.js',
   './assets/icons/favicon.svg',

@@ -11,6 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DAYMARK">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <script src="js/install.js"></script>
 
   <!-- Favicon & Web Manifest -->
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
@@ -597,6 +598,24 @@
           </div>
         </div>
 
+        <!-- Group: Install & Device Setup -->
+        <div class="settings-group">
+          <div class="settings-group-header">Install App & Device Setup</div>
+          <div class="settings-item">
+            <div class="settings-item-info">
+              <span class="settings-item-title">Install DAYMARK</span>
+              <span class="settings-item-desc">Run it like a normal app with its own icon, offline support and reliable notifications.</span>
+            </div>
+            <div style="display: flex; gap: var(--space-xs); align-items: center;">
+              <span id="installStatus" class="status-pill" style="white-space: nowrap;">Checking...</span>
+              <button id="installBtn" class="btn btn-primary btn-sm" style="display: none;">Install</button>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div id="installGuide" class="settings-item-info" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;"></div>
+          </div>
+        </div>
+
         <!-- Group: Notifications -->
         <div class="settings-group">
           <div class="settings-group-header">Notifications & Push Alerts</div>
@@ -618,7 +637,7 @@
             </div>
           </div>
           <div class="settings-item">
-            <div class="settings-item-info" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+            <div id="pushPlatformNote" class="settings-item-info" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
               <strong style="color: var(--text-secondary);">iPhone PWA Note:</strong> On iOS 16.4+, Web Push requires adding DAYMARK to your Home Screen via Safari (Share → Add to Home Screen) before notification permissions can be granted.
             </div>
           </div>
