@@ -236,3 +236,31 @@ input, select, textarea {
     right: max(16px, var(--safe-right));
   }
 }
+
+/* Modal scroll fix (v1.3.1) */
+.modal-sheet {
+  max-height: 90vh;
+  max-height: 90dvh;
+  min-height: 0;
+}
+@media (max-width: 639px) {
+  .modal-sheet { max-height: 92vh; max-height: 92dvh; }
+}
+.modal-sheet > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+.modal-header, .modal-footer, .modal-drag-handle { flex-shrink: 0; }
+.modal-footer { background: var(--bg-card); }
