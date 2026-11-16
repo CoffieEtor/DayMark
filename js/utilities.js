@@ -111,6 +111,10 @@ const Utils = {
     const target = new Date(dateStr + 'T00:00:00');
     const diffDays = Math.round((target - today) / (1000 * 60 * 60 * 24));
 
+    if (diffDays === 0) {
+      // Due today but the time has passed (status 'overdue')
+      return timeStr ? `Overdue since ${this.formatTime(timeStr)}` : 'Today';
+    }
     if (diffDays < 0) {
       const daysOver = Math.abs(diffDays);
       return daysOver === 1 ? 'Overdue by 1 day' : `Overdue by ${daysOver} days`;
