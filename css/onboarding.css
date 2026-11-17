@@ -241,39 +241,36 @@
   z-index: 1;
   background: linear-gradient(to top, var(--bg-main) 70%, transparent);
   display: flex;
-  gap: 10px;
+  justify-content: center;
+  gap: 12px;
   max-width: 520px;
   width: 100%;
   margin: 0 auto;
   padding-top: 8px;
 }
 
-.ob-nav.single {
-  justify-content: center;
-}
-
 .ob-nav.single .ob-btn.primary {
-  flex: 0 1 280px;
+  min-width: 160px;
 }
 
 .ob-btn {
   font: inherit;
+  font-size: 0.92rem;
   font-weight: 600;
-  flex: 1;
-  padding: 15px 18px;
-  border-radius: 14px;
+  padding: 10px 22px;
+  border-radius: 10px;
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
   color: var(--text-primary);
   cursor: pointer;
-  min-height: 52px;
+  min-height: 40px;
+  min-width: 112px;
 }
 
 .ob-btn.primary {
   background: linear-gradient(135deg, var(--accent-hover), var(--accent));
   color: #0E0F12;
   border-color: transparent;
-  flex: 2;
 }
 
 .ob-btn:active { transform: scale(0.98); }

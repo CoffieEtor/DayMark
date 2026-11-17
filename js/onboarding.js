@@ -74,7 +74,7 @@ const Onboarding = {
     el.innerHTML = `
       <div class="ob-top"><div class="ob-progress" aria-label="Onboarding progress">${this.steps.map((_, idx) => `<i data-step="${idx}"></i>`).join('')}</div><button class="ob-skip" type="button" hidden>Skip tour</button></div>
       <div class="ob-stage"><div class="ob-card" id="obCard"></div></div>
-      <div class="ob-nav"><button class="ob-btn" type="button" id="obBack">Back</button><button class="ob-btn primary" type="button" id="obNext">Next</button></div>`;
+      <div class="ob-nav"><button class="ob-btn" type="button" id="obBack">Previous</button><button class="ob-btn primary" type="button" id="obNext">Next</button></div>`;
     document.body.appendChild(el);
     this.el = el;
 
