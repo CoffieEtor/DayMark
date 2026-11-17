@@ -110,19 +110,17 @@ const Onboarding = {
     if (step.id === 'welcome') {
       next.textContent = this.tourOnly ? 'Start tour' : 'Get started';
       html = `
-        <div class="ob-icon">${this.ICONS.smile}</div>
         <div class="ob-kicker">Welcome</div>
         <h1>Welcome to DAYMARK</h1>
         <p>DAYMARK is your personal command centre for the day: one calm place for what you need to do, what you must not forget, and what you want to buy.</p>
         <div class="ob-features">
-          <div class="ob-feature">${this.ICONS.task}<div><b>Tasks</b><span>Priorities, due dates and an always-clear view of today.</span></div></div>
-          <div class="ob-feature">${this.ICONS.bell}<div><b>Reminders</b><span>Time-based alerts, even when the app is closed.</span></div></div>
-          <div class="ob-feature">${this.ICONS.bag}<div><b>Wishlist</b><span>Save purchases and let “Pick for me” decide within your budget.</span></div></div>
+          <div class="ob-feature"><div><b>Tasks</b><span>Priorities, due dates and an always-clear view of today.</span></div></div>
+          <div class="ob-feature"><div><b>Reminders</b><span>Time-based alerts, even when the app is closed.</span></div></div>
+          <div class="ob-feature"><div><b>Wishlist</b><span>Save purchases and let “Pick for me” decide within your budget.</span></div></div>
         </div>
         <p style="margin-top:14px;font-size:.85rem">Everything stays on this device. No account needed.</p>`;
     } else if (step.id === 'name') {
       html = `
-        <div class="ob-icon">${this.ICONS.user}</div>
         <div class="ob-kicker">About you</div>
         <h1>What’s your name?</h1>
         <p>So DAYMARK can greet you properly.</p>
@@ -132,7 +130,6 @@ const Onboarding = {
     } else if (step.id === 'address') {
       const opts = Profile.suggestions(this.draft.name);
       html = `
-        <div class="ob-icon">${this.ICONS.smile}</div>
         <div class="ob-kicker">Your style</div>
         <h1>How should DAYMARK address you?</h1>
         <p>Choose one below or type your own, like a nickname or a title.</p>
@@ -143,14 +140,12 @@ const Onboarding = {
         <div class="ob-preview">You’ll see<strong id="obPrev"></strong></div>`;
     } else if (isTour) {
       html = `
-        <div class="ob-icon">${this.ICONS[step.icon]}</div>
         <div class="ob-kicker">${step.kicker}</div>
         <h1>${step.title}</h1>
         <p>${step.body}</p>`;
     } else if (step.id === 'done') {
       next.textContent = this.tourOnly ? 'Done' : 'Open DAYMARK';
       html = `
-        <div class="ob-icon">${this.ICONS.check}</div>
         <div class="ob-kicker">${this.tourOnly ? 'That’s the tour' : 'All set'}</div>
         <h1>${this.tourOnly ? 'You’re ready' : `You’re all set${who ? ', ' + who : ''}`}</h1>
         <p>${this.tourOnly ? 'Replay this any time from Settings.' : 'Your lists start empty. Add your first task, reminder or wishlist item whenever you’re ready. DAYMARK remembers everything you enter and reopens where you left off.'}</p>`;
