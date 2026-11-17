@@ -99,19 +99,27 @@
 
 .ob-progress {
   flex: 1;
-  height: 4px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .ob-progress > i {
-  display: block;
-  height: 100%;
-  width: 0;
-  background: var(--accent);
+  flex: 1;
+  height: 4px;
   border-radius: 4px;
-  transition: width 0.35s ease;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background-color 0.25s ease, transform 0.25s ease;
+}
+
+.ob-progress > i.done {
+  background: var(--accent);
+  opacity: 0.45;
+}
+
+.ob-progress > i.active {
+  background: var(--accent);
+  opacity: 1;
 }
 
 .ob-skip {

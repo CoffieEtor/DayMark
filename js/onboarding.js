@@ -72,7 +72,7 @@ const Onboarding = {
     el.setAttribute('aria-modal', 'true');
     el.setAttribute('aria-label', 'Welcome to DAYMARK');
     el.innerHTML = `
-      <div class="ob-top"><div class="ob-progress"><i></i></div><button class="ob-skip" type="button" hidden>Skip tour</button></div>
+      <div class="ob-top"><div class="ob-progress" aria-label="Onboarding progress">${this.steps.map((_, idx) => `<i data-step="${idx}"></i>`).join('')}</div><button class="ob-skip" type="button" hidden>Skip tour</button></div>
       <div class="ob-stage"><div class="ob-card" id="obCard"></div></div>
       <div class="ob-nav"><button class="ob-btn" type="button" id="obBack">Back</button><button class="ob-btn primary" type="button" id="obNext">Next</button></div>`;
     document.body.appendChild(el);
@@ -95,11 +95,14 @@ const Onboarding = {
     const back = this.el.querySelector('#obBack');
     const next = this.el.querySelector('#obNext');
     const skip = this.el.querySelector('.ob-skip');
-    const bar = this.el.querySelector('.ob-progress > i');
+    const dashes = this.el.querySelectorAll('.ob-progress > i');
     const who = this.esc(this.draft.addressAs || this.firstName() || '');
     const isTour = step.id.startsWith('tour-');
 
-    bar.style.width = `${Math.round(((this.i + 1) / this.steps.length) * 100)}%`;
+    dashes.forEach((d, idx) => {
+      d.classList.toggle('active', idx === this.i);
+      d.classList.toggle('done', idx < this.i);
+    });
     back.hidden = (this.i === 0);
     this.el.querySelector('.ob-nav').classList.toggle('single', this.i === 0);
     skip.hidden = (step.id === 'done');
