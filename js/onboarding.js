@@ -55,8 +55,9 @@ const Onboarding = {
         body: 'In Settings you can change your name, currency and colours, install DAYMARK on your home screen, and back up your data. It always reopens where you left off.' }
     ];
     const welcome = { id: 'welcome' };
-    if (this.tourOnly) return [welcome, ...tour, { id: 'done' }];
-    return [welcome, { id: 'name' }, { id: 'address' }, ...tour, { id: 'done' }];
+    const overview = { id: 'overview' };
+    if (this.tourOnly) return [welcome, overview, ...tour, { id: 'done' }];
+    return [welcome, overview, { id: 'name' }, { id: 'address' }, ...tour, { id: 'done' }];
   },
 
   async start(opts = {}) {
@@ -116,12 +117,17 @@ const Onboarding = {
         <div class="ob-kicker">Welcome</div>
         <h1>Welcome to DAYMARK</h1>
         <p>DAYMARK is your personal command centre for the day: one calm place for what you need to do, what you must not forget, and what you want to buy.</p>
+        <p style="margin-top:14px;font-size:.85rem">Everything stays on this device. No account needed.</p>`;
+    } else if (step.id === 'overview') {
+      html = `
+        <div class="ob-kicker">What’s inside</div>
+        <h1>Three focused spaces</h1>
+        <p>Each part of your day has its own dedicated section.</p>
         <div class="ob-features">
           <div class="ob-feature"><div><b>Tasks</b><span>Priorities, due dates and an always-clear view of today.</span></div></div>
           <div class="ob-feature"><div><b>Reminders</b><span>Time-based alerts, even when the app is closed.</span></div></div>
           <div class="ob-feature"><div><b>Wishlist</b><span>Save purchases and let “Pick for me” decide within your budget.</span></div></div>
-        </div>
-        <p style="margin-top:14px;font-size:.85rem">Everything stays on this device. No account needed.</p>`;
+        </div>`;
     } else if (step.id === 'name') {
       html = `
         <div class="ob-kicker">About you</div>
