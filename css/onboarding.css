@@ -269,9 +269,14 @@
 }
 
 .ob-btn.primary {
-  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
-  color: #0E0F12;
-  border-color: transparent;
+  background: var(--accent-muted);
+  color: var(--accent);
+  border-color: rgba(214, 181, 109, 0.45);
+}
+
+.ob-btn.primary:hover {
+  background: rgba(214, 181, 109, 0.24);
+  border-color: var(--accent);
 }
 
 .ob-btn:active { transform: scale(0.98); }
