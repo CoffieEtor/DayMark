@@ -246,7 +246,8 @@
   max-width: 520px;
   width: 100%;
   margin: 0 auto;
-  padding-top: 8px;
+  padding-top: 12px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
 .ob-nav.single .ob-btn.primary {
