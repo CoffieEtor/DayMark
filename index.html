@@ -90,11 +90,6 @@
     </div>
   </header>
 
-  <!-- Mobile Floating Action Button (FAB) -->
-  <button id="mobileFabBtn" class="mobile-fab" aria-label="Create new item">
-    <svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>
-
   <div class="app-layout">
     <!-- ========================================================================
          Desktop Navigation Sidebar (Visible on screens >= 840px)
@@ -164,7 +159,19 @@
         <div class="greeting-hero">
           <div id="dashDate" class="greeting-date">Monday, November 2, 2026</div>
           <h1 id="dashGreeting" class="greeting-text">Good day</h1>
-          <p class="greeting-sub">Your personal command center for daily responsibilities, reminders, and intentional purchases.</p>
+          <p class="greeting-sub">Your daily overview at a glance. Open any section below to manage details.</p>
+        </div>
+
+        <!-- Notification Permission Prompt (shown when permission is 'default') -->
+        <div id="notifPermissionBanner" class="notif-prompt-banner" style="display: none;">
+          <div class="notif-prompt-info">
+            <strong>Enable Reminder Notifications</strong>
+            <span>Allow DAYMARK to alert you when your reminders are due, even when the app is closed.</span>
+          </div>
+          <div class="notif-prompt-actions">
+            <button type="button" id="notifPromptDismissBtn" class="btn btn-ghost btn-sm">Not now</button>
+            <button type="button" id="notifPromptAllowBtn" class="btn btn-primary btn-sm">Allow Notifications</button>
+          </div>
         </div>
 
         <!-- Daily Progress Bar Card -->
@@ -182,23 +189,7 @@
           <div id="dashProgressText" class="progress-subtext">Calculating today's tasks...</div>
         </div>
 
-        <!-- Quick Action Shortcuts -->
-        <div class="quick-actions-bar">
-          <button class="quick-action-btn" onclick="App.openTaskModal()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New Task
-          </button>
-          <button class="quick-action-btn" onclick="App.openReminderModal()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New Reminder
-          </button>
-          <button class="quick-action-btn" onclick="App.openWishlistModal()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add to Wishlist
-          </button>
-        </div>
-
-        <!-- Key Metrics Cards -->
+        <!-- Minimized Summary Cards (each opens its dedicated section) -->
         <div class="stats-grid">
           <div class="stat-card" onclick="Navigation.navigateTo('tasks')" style="cursor: pointer;">
             <div class="stat-header">
@@ -250,53 +241,6 @@
               <span class="stat-value">GH₵ 0.00</span>
               <span class="stat-sub">0 items</span>
             </div>
-          </div>
-        </div>
-
-        <!-- Dashboard Content Sections -->
-        <div class="dashboard-sections">
-          <div>
-            <div class="section-title-row">
-              <h2 class="section-heading">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-                Today & Overdue
-              </h2>
-              <span class="section-action-link" onclick="Navigation.navigateTo('tasks')">View all →</span>
-            </div>
-            <div id="dashTodayTasksList"></div>
-          </div>
-
-          <div>
-            <div class="section-title-row">
-              <h2 class="section-heading">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                Upcoming Reminders
-              </h2>
-              <span class="section-action-link" onclick="Navigation.navigateTo('reminders')">View all →</span>
-            </div>
-            <div id="dashRemindersList"></div>
-          </div>
-
-          <div>
-            <div class="section-title-row">
-              <h2 class="section-heading">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                High Priority Focus
-              </h2>
-              <span class="section-action-link" onclick="Navigation.navigateTo('tasks')">Organize →</span>
-            </div>
-            <div id="dashHighPriorityList"></div>
-          </div>
-
-          <div>
-            <div class="section-title-row">
-              <h2 class="section-heading">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                Decision & Wishlist
-              </h2>
-              <span class="section-action-link" onclick="Navigation.navigateTo('wishlist')">Wishlist →</span>
-            </div>
-            <div id="dashWishlistSummary"></div>
           </div>
         </div>
       </section>
@@ -683,6 +627,36 @@
           </div>
         </div>
 
+        <!-- Group: Device Sync (QR Code, No Signup) -->
+        <div class="settings-group">
+          <div class="settings-group-header">Device Sync (Phone & Desktop)</div>
+          <div class="settings-item">
+            <div class="settings-item-info">
+              <span class="settings-item-title">Sync via QR Code</span>
+              <span class="settings-item-desc">Generate a one-time QR code to transfer your tasks, reminders, wishlist, and profile to another device — no account needed.</span>
+            </div>
+            <button id="settingsGenerateQrBtn" class="btn btn-primary btn-sm">Generate QR</button>
+          </div>
+          <div id="syncQrContainer" class="sync-qr-box" style="display: none;">
+            <div id="syncQrSvg" class="sync-qr-svg"></div>
+            <div class="sync-qr-meta">
+              <div class="sync-code-label">One-time Sync Code (valid 15 min)</div>
+              <div id="syncCodeText" class="sync-code-value">------</div>
+              <p class="settings-item-desc" style="margin-top: 6px;">Scan this QR code with your phone camera, or enter the code on your other device.</p>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item-info">
+              <span class="settings-item-title">Receive from Another Device</span>
+              <span class="settings-item-desc">Enter a 6-character sync code generated on your other device.</span>
+            </div>
+            <div style="display: flex; gap: var(--space-xs); align-items: center;">
+              <input type="text" id="syncPullCodeInput" class="form-input" placeholder="ABC123" maxlength="8" style="width: 110px; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 10px;">
+              <button id="settingsPullSyncBtn" class="btn btn-secondary btn-sm">Sync</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Group: Data Management & Backup -->
         <div class="settings-group">
           <div class="settings-group-header">Data Backup & Recovery</div>
@@ -1008,6 +982,7 @@
   <script src="js/onboarding.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/backup.js"></script>
+  <script src="js/sync.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

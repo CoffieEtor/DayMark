@@ -3,7 +3,7 @@
  * Provides offline caching, network-resilient asset delivery, and Web Push notifications.
  */
 
-const CACHE_NAME = 'daymark-cache-v7';
+const CACHE_NAME = 'daymark-cache-v8';
 
 const STATIC_ASSETS = [
   './',
@@ -29,6 +29,7 @@ const STATIC_ASSETS = [
   './js/onboarding.js',
   './css/onboarding.css',
   './js/backup.js',
+  './js/sync.js',
   './js/utilities.js',
   './assets/icons/favicon.svg',
   './assets/icons/icon-192.png',
@@ -91,7 +92,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets, serve from cache with background network refresh (stale-while-revalidate)
+  // For app code/styles, use network-first so deployed fixes take effect immediately, falling back to cache offline
+  if (/\.(css|js|webmanifest)$/i.test(requestUrl.pathname)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // For other static assets (icons, images), serve from cache with background network refresh (stale-while-revalidate)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
@@ -184,7 +201,20 @@ self.addEventListener('notificationclick', (event) => {
 
 // Message listener for client coordination
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.action === 'SKIP_WAITING') {
+  if (!event.data) return;
+  if (event.data.action === 'SKIP_WAITING') {
     self.skipWaiting();
+  } else if (event.data.type === 'TRIGGER_NOTIFICATION') {
+    event.waitUntil(
+      self.registration.showNotification(event.data.title || 'DAYMARK Reminder', {
+        body: event.data.body || 'You have a due reminder in DAYMARK.',
+        icon: './assets/icons/icon-192.png',
+        badge: './assets/icons/favicon.svg',
+        vibrate: [100, 50, 100],
+        data: { url: './index.html#reminders', timestamp: Date.now() },
+        tag: 'daymark-inapp-reminder',
+        renotify: true
+      })
+    );
   }
 });

@@ -17,8 +17,12 @@ const App = {
       // First-time users: show the welcome flow right away (the app finishes loading behind it)
       // instead of waiting for every module to initialise first.
       if (!Profile.data.onboarded) {
-        Onboarding.start();
+        Onboarding.start().then(() => {
+          Notifications.maybePromptPermission();
+        });
         Splash.hide(600);
+      } else {
+        Notifications.maybePromptPermission();
       }
       // New users start with an empty app (no demo data); the welcome flow collects their name.
       Splash.setGreeting(Profile.data.onboarded && Profile.displayName() ? `Welcome back, ${Profile.displayName()}` : 'Plan your day. Own your time.');
@@ -46,6 +50,8 @@ const App = {
       Session.restoreControls();
       Session.track();
       requestAnimationFrame(() => setTimeout(() => Session.restoreScroll(), 60));
+
+      if (window.Sync) Sync.checkUrlSync();
 
       console.log('[DAYMARK] Application successfully initialized.');
     } catch (err) {
@@ -495,8 +501,11 @@ const App = {
   showModal(id) {
     const el = document.getElementById(id);
     if (el) {
+      const body = el.querySelector('.modal-body');
+      if (body) body.scrollTop = 0;
       el.classList.add('active');
       this.activeModal = id;
+      document.body.style.overflow = 'hidden';
     }
   },
 
@@ -508,6 +517,9 @@ const App = {
     if (el) {
       el.classList.remove('active');
       if (this.activeModal === id) this.activeModal = null;
+      if (!document.querySelector('.modal-backdrop.active')) {
+        document.body.style.overflow = '';
+      }
     }
   }
 };

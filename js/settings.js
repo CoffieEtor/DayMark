@@ -95,6 +95,29 @@ const Settings = {
       });
     }
 
+    // Device Sync (QR Code)
+    const genQrBtn = document.getElementById('settingsGenerateQrBtn');
+    if (genQrBtn) {
+      genQrBtn.addEventListener('click', () => {
+        Utils.playSound('click');
+        Sync.generateQR();
+      });
+    }
+    const pullSyncBtn = document.getElementById('settingsPullSyncBtn');
+    const pullSyncInput = document.getElementById('syncPullCodeInput');
+    if (pullSyncBtn && pullSyncInput) {
+      pullSyncBtn.addEventListener('click', () => {
+        Utils.playSound('click');
+        Sync.pullByCode(pullSyncInput.value);
+      });
+      pullSyncInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          Sync.pullByCode(pullSyncInput.value);
+        }
+      });
+    }
+
     // Export Data button
     const exportBtn = document.getElementById('settingsExportBtn');
     if (exportBtn) {

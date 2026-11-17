@@ -37,4 +37,11 @@ module.exports = {
     const all = (await redis().hgetall(REMS)) || {};
     return Object.values(all).map(parse);
   },
+  async saveSyncSnapshot(code, payload, ttlSeconds = 900) {
+    await redis().set(`dm:sync:${code}`, JSON.stringify(payload), { ex: ttlSeconds });
+  },
+  async getSyncSnapshot(code) {
+    const v = await redis().get(`dm:sync:${code}`);
+    return v ? parse(v) : null;
+  },
 };

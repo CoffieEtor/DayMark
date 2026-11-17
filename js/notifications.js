@@ -46,8 +46,11 @@ const Notifications = {
       }
     }
 
-    // Try fetching VAPID public key from backend if running
-    this.fetchVapidKey();
+    // Try fetching VAPID public key from backend if running, and ensure subscription is active
+    await this.fetchVapidKey();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      this.subscribeToPush();
+    }
 
     // Start in-app reminder checker (runs every 30s while app is open)
     this.startInAppReminderMonitor();
@@ -82,6 +85,9 @@ const Notifications = {
     try {
       const permission = await Notification.requestPermission();
       State.setNotificationPermission(permission);
+
+      const banner = document.getElementById('notifPermissionBanner');
+      if (banner) banner.style.display = 'none';
 
       if (permission === 'granted') {
         Utils.showToast('Notification permission granted!', 'success');
@@ -275,6 +281,39 @@ const Notifications = {
     } catch (err) {
       console.error('Test notification failed:', err);
       Utils.showToast('Failed to trigger notification: ' + err.message, 'error');
+    }
+  },
+
+  /**
+   * Prompt the user on Home to allow notifications when permission is still 'default'
+   */
+  maybePromptPermission() {
+    if (!('Notification' in window) || Notification.permission !== 'default') return;
+    const banner = document.getElementById('notifPermissionBanner');
+    if (!banner) return;
+
+    try {
+      const dismissedAt = Number(localStorage.getItem('daymark.notifPromptDismissed') || 0);
+      if (dismissedAt && Date.now() - dismissedAt < 7 * 24 * 3600 * 1000) return;
+    } catch (e) { /* ignore */ }
+
+    banner.style.display = 'flex';
+    const allowBtn = document.getElementById('notifPromptAllowBtn');
+    const dismissBtn = document.getElementById('notifPromptDismissBtn');
+
+    if (allowBtn && !allowBtn.dataset.bound) {
+      allowBtn.dataset.bound = '1';
+      allowBtn.addEventListener('click', async () => {
+        await this.requestPermission();
+        banner.style.display = 'none';
+      });
+    }
+    if (dismissBtn && !dismissBtn.dataset.bound) {
+      dismissBtn.dataset.bound = '1';
+      dismissBtn.addEventListener('click', () => {
+        banner.style.display = 'none';
+        try { localStorage.setItem('daymark.notifPromptDismissed', String(Date.now())); } catch (e) { /* ignore */ }
+      });
     }
   },
 

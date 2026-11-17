@@ -319,8 +319,12 @@ const Reminders = {
       await State.reloadFromDB();
       Utils.showToast(newCompleted ? 'Reminder completed! ✨' : 'Reminder reopened', 'success');
 
-      if (newCompleted && window.Notifications) {
-        Notifications.cancelScheduledReminder(id);
+      if (window.Notifications) {
+        if (newCompleted) {
+          Notifications.cancelScheduledReminder(id);
+        } else {
+          Notifications.scheduleReminder(reminder);
+        }
       }
     } catch (err) {
       console.error('Failed to update reminder:', err);
@@ -397,6 +401,7 @@ const Reminders = {
           description: (formData.description || '').trim(),
           reminderDate,
           reminderTime,
+          notificationStatus: 'pending',
           updatedAt: Date.now()
         };
 

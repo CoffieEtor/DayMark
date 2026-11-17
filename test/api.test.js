@@ -4,12 +4,15 @@ const assert = require('node:assert/strict');
 const Module = require('module');
 
 const hashes = {};
+const kv = {};
 class FakeRedis {
   async hset(k, o) { hashes[k] = { ...(hashes[k] || {}), ...o }; }
   async hget(k, f) { return (hashes[k] || {})[f] ?? null; }
   async hdel(k, ...f) { f.forEach((x) => delete (hashes[k] || {})[x]); }
   async hgetall(k) { return hashes[k] ? { ...hashes[k] } : null; }
   async hlen(k) { return Object.keys(hashes[k] || {}).length; }
+  async set(k, v) { kv[k] = v; }
+  async get(k) { return kv[k] ?? null; }
 }
 const origLoad = Module._load;
 const sent = [];
@@ -79,4 +82,19 @@ test('cancel only by owner; unsubscribe removes reminders; test-push is per devi
   assert.equal(Object.keys(hashes['dm:subs']).length, 1);
   const h = await call(api('health'), 'GET');
   assert.deepEqual([h.code, h.body.vapidConfigured], [200, true]);
+});
+
+test('sync/push and sync/pull transfer snapshot by one-time code', async () => {
+  const pushRes = await call(api('sync/push'), 'POST', { data: { app: 'DAYMARK', schemaVersion: 1, data: { tasks: [{ id: 't1' }], reminders: [], wishlist: [], settings: [] } } });
+  assert.equal(pushRes.code, 201);
+  assert.match(pushRes.body.code, /^[A-Z0-9]{6}$/);
+
+  const pullRes = { code: 200, body: null, headers: {}, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+  await api('sync/pull')({ method: 'GET', query: { code: pushRes.body.code }, headers: {} }, pullRes);
+  assert.equal(pullRes.code, 200);
+  assert.equal(pullRes.body.data.data.tasks[0].id, 't1');
+
+  const missRes = { code: 200, body: null, headers: {}, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+  await api('sync/pull')({ method: 'GET', query: { code: 'ZZZZZZ' }, headers: {} }, missRes);
+  assert.equal(missRes.code, 404);
 });
