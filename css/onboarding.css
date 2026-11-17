@@ -221,7 +221,13 @@
   cursor: pointer;
 }
 
-.ob-chip.on { border-color: var(--accent); background: var(--accent-muted); color: var(--accent); }
+.ob-chip.on {
+  border-color: var(--accent-hover);
+  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
+  color: #0E0F12;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(214, 181, 109, 0.35);
+}
 
 .ob-preview {
   margin-top: 16px;
