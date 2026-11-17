@@ -296,3 +296,65 @@
   .splash-bar::after { animation-duration: 2.4s; }
   #splash, #onboarding, .ob-progress > i { transition-duration: 0.01s; }
 }
+
+/* ---------- In-app Quick Tour ---------- */
+#quickTour {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--bottom-nav-height, 64px) + 12px);
+  z-index: 8500;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+@media (min-width: 840px) {
+  #quickTour {
+    bottom: 24px;
+    left: var(--sidebar-width, 260px);
+  }
+}
+
+.qt-card {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-card);
+  border: 1px solid rgba(214, 181, 109, 0.4);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+  animation: obIn 0.25s ease both;
+}
+
+.qt-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.qt-top .ob-skip {
+  padding: 4px 0 4px 8px;
+}
+
+.qt-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.qt-body {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.qt-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
