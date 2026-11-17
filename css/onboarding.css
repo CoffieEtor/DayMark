@@ -240,6 +240,14 @@
   padding-top: 8px;
 }
 
+.ob-nav.single {
+  justify-content: center;
+}
+
+.ob-nav.single .ob-btn.primary {
+  flex: 0 1 280px;
+}
+
 .ob-btn {
   font: inherit;
   font-weight: 600;

@@ -100,8 +100,10 @@ const Onboarding = {
     const isTour = step.id.startsWith('tour-');
 
     bar.style.width = `${Math.round(((this.i + 1) / this.steps.length) * 100)}%`;
-    back.style.visibility = this.i === 0 ? 'hidden' : 'visible';
-    skip.hidden = !isTour;
+    back.hidden = (this.i === 0);
+    this.el.querySelector('.ob-nav').classList.toggle('single', this.i === 0);
+    skip.hidden = (step.id === 'done');
+    skip.textContent = isTour ? 'Skip tour' : 'Skip';
     next.textContent = 'Next';
 
     let html = '';
@@ -215,8 +217,13 @@ const Onboarding = {
   },
 
   skipTour() {
-    this.i = this.steps.length - 1;
-    this.render();
+    const step = this.steps[this.i];
+    if (step && step.id.startsWith('tour-')) {
+      this.i = this.steps.length - 1;
+      this.render();
+    } else {
+      this.finish();
+    }
   },
 
   async finish() {
