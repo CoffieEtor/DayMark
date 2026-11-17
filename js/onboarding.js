@@ -99,7 +99,7 @@ const Onboarding = {
         <div class="ob-kicker">Welcome</div>
         <h1>Welcome to DAYMARK</h1>
         <p>DAYMARK is your personal command centre for the day: one calm place for what you need to do, what you must not forget, and what you want to buy.</p>
-        <p style="margin-top:14px;font-size:.85rem">Everything stays on this device. No account needed.</p>`;
+        <p style="margin-top:18px;font-size:.85rem;color:var(--accent);text-align:center;">Everything stays on this device. No account needed.</p>`;
     } else if (step.id === 'overview') {
       html = `
         <div class="ob-kicker">What’s inside</div>
