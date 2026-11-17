@@ -167,9 +167,17 @@
   font-size: 0.75rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--text-muted);
   margin-bottom: 8px;
   font-weight: 600;
+}
+
+.ob-welcome-box {
+  border: 1px solid rgba(214, 181, 109, 0.45);
+  background: rgba(214, 181, 109, 0.05);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-top: 4px;
 }
 
 .ob-card h1 { font-size: 1.7rem; line-height: 1.2; margin: 0 0 12px; font-weight: 700; }
