@@ -21,8 +21,8 @@
       "package": "com.expojet.daymark"
     },
     "web": {
-      "output": "static",
-      "favicon": "./assets/favicon.svg"
+      "output": "single",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": ["expo-router", "expo-splash-screen", "expo-sqlite", "expo-notifications"],
     "experiments": {
