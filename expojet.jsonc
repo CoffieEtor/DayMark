@@ -1,0 +1,30 @@
+{
+  "$schema": "https://expojet.dev/schemas/project.schema.json",
+  "generatorVersion": "0.8.1",
+  "sdk": 57,
+  "sdkPackSha256": "86e80e3a8d767a1ba47e864213c2be853c2ba29550a643da10c31c1cfe5b46be",
+  "structure": "standalone",
+  "packageManager": "npm",
+  "adapters": {
+    "navigation": "router",
+    "navigationType": "tabs",
+    "backend": "none",
+    "auth": "none",
+    "socialProviders": [],
+    "style": "stylesheet",
+    "database": "sqlite",
+    "orm": "drizzle",
+    "icons": "lucide",
+    "state": "none",
+    "analytics": "none",
+    "monitoring": "none"
+  },
+  "features": {
+    "onboarding": false,
+    "darkMode": true,
+    "liquidGlass": false,
+    "haptics": true,
+    "typescript": true,
+    "eas": true
+  }
+}
