@@ -3,13 +3,19 @@ import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, St
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components/ui/icon";
 import { haptic } from "../haptics";
+import { ACCENTS, useStore } from "./store";
 
-export const C = { bg: "#141414", s1: "#1d1d1c", s2: "#272624", line: "#34322f", tx: "#ece8e1", mu: "#9a958c", ac: "#d6b98c", bad: "#d9806f" };
+export const C = { bg: "#101114", s1: "#181A1F", s2: "#22252C", line: "#2D313A", tx: "#ECE8E1", mu: "#9699A3", ac: "#D6B56D", bad: "#E07A6D" };
+
+export function useAccent(): string {
+  const { accent } = useStore();
+  return ACCENTS[accent]?.hex ?? C.ac;
+}
 
 export function Screen({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   const i = useSafeAreaInsets();
   return (
-    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 18, paddingTop: 10, paddingBottom: i.bottom + 40 }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 18, paddingTop: i.top + 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <Text style={s.h1} accessibilityRole="header">{title}</Text>
       {sub ? <Text style={s.mu}>{sub}</Text> : null}
       {children}
@@ -22,21 +28,23 @@ export const Card = ({ children, accent, done }: { children: React.ReactNode; ac
   <View style={[s.card, accent ? { borderLeftColor: accent, borderLeftWidth: 3 } : null, done && { opacity: 0.6 }]}>{children}</View>
 );
 export function Btn({ label, onPress, kind = "main", disabled }: { label: string; onPress: () => void; kind?: "main" | "ghost" | "bad"; disabled?: boolean }) {
-  const bg = kind === "main" ? C.ac : kind === "ghost" ? C.s2 : "transparent";
+  const ac = useAccent();
+  const bg = kind === "main" ? ac : kind === "ghost" ? C.s2 : "transparent";
   return (
     <Pressable accessibilityRole="button" disabled={disabled} onPress={() => { haptic.light(); onPress(); }}
       style={[s.btn, { backgroundColor: bg, opacity: disabled ? 0.4 : 1 }, kind === "bad" && { borderWidth: 1, borderColor: C.line }]}>
-      <Text style={{ color: kind === "main" ? "#1a1612" : kind === "bad" ? C.bad : C.tx, fontWeight: "600" }}>{label}</Text>
+      <Text style={{ color: kind === "main" ? "#101114" : kind === "bad" ? C.bad : C.tx, fontWeight: "600" }}>{label}</Text>
     </Pressable>
   );
 }
 export const Row = ({ children }: { children: React.ReactNode }) => <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginVertical: 8 }}>{children}</View>;
 export function Seg<T extends string>({ opts, value, on }: { opts: [T, string][]; value: T; on: (v: T) => void }) {
+  const ac = useAccent();
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 6 }}>
       {opts.map(([v, l]) => (
         <Pressable key={v} accessibilityRole="button" accessibilityState={{ selected: v === value }} onPress={() => { haptic.selection(); on(v); }}
-          style={[s.chip, v === value && { borderColor: C.ac }]}><Text style={{ color: v === value ? C.ac : C.mu }}>{l}</Text></Pressable>
+          style={[s.chip, v === value && { borderColor: ac }]}><Text style={{ color: v === value ? ac : C.mu }}>{l}</Text></Pressable>
       ))}
     </ScrollView>
   );
@@ -44,10 +52,13 @@ export function Seg<T extends string>({ opts, value, on }: { opts: [T, string][]
 export const Empty = ({ t, sub }: { t: string; sub: string }) => (
   <View style={{ alignItems: "center", padding: 32 }}><Text style={{ color: C.tx, fontWeight: "600" }}>{t}</Text><Text style={s.mu}>{sub}</Text></View>
 );
-export const Check = ({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) => (
-  <Pressable accessibilityRole="checkbox" accessibilityLabel={label} accessibilityState={{ checked: on }} hitSlop={10} onPress={() => { haptic.success(); onPress(); }}
-    style={[s.check, on && { backgroundColor: C.ac, borderColor: C.ac }]}>{on ? <Text style={{ color: C.bg, fontSize: 14 }}>✓</Text> : null}</Pressable>
-);
+export function Check({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
+  const ac = useAccent();
+  return (
+    <Pressable accessibilityRole="checkbox" accessibilityLabel={label} accessibilityState={{ checked: on }} hitSlop={10} onPress={() => { haptic.success(); onPress(); }}
+      style={[s.check, on && { backgroundColor: ac, borderColor: ac }]}>{on ? <Text style={{ color: C.bg, fontSize: 14, fontWeight: "700" }}>✓</Text> : null}</Pressable>
+  );
+}
 export const confirmDelete = (label: string, fn: () => void) => Alert.alert("Delete?", `"${label}" will be removed.`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: fn }]);
 export function CardMenu({ label, onEdit, onDelete }: { label: string; onEdit: () => void; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
@@ -93,10 +104,35 @@ export function CardMenu({ label, onEdit, onDelete }: { label: string; onEdit: (
 }
 export const Input = (p: React.ComponentProps<typeof TextInput>) => <TextInput placeholderTextColor={C.mu} {...p} style={[s.input, p.style]} />;
 
-export type Field = { k: string; label: string; multiline?: boolean; numeric?: boolean; placeholder?: string; required?: boolean; options?: string[] };
-export function FormSheet({ title, fields, initial, onSave, onClose }: { title: string; fields: Field[]; initial: Record<string, string>; onSave: (v: Record<string, string>) => string | void; onClose: () => void }) {
+export type Field = {
+  k: string;
+  label: string;
+  multiline?: boolean;
+  numeric?: boolean;
+  placeholder?: string;
+  required?: boolean;
+  options?: string[];
+  optionLabels?: Record<string, string>;
+  presets?: { label: string; value: string }[];
+};
+export function FormSheet({
+  title,
+  fields,
+  initial,
+  onSave,
+  onClose,
+  extra,
+}: {
+  title: string;
+  fields: Field[];
+  initial: Record<string, string>;
+  onSave: (v: Record<string, string>) => string | void;
+  onClose: () => void;
+  extra?: React.ReactNode;
+}) {
   const [v, setV] = useState<Record<string, string>>(initial);
   const [err, setErr] = useState("");
+  const ac = useAccent();
   const submit = () => {
     setErr("");
     for (const f of fields) if (f.required && !v[f.k]?.trim()) return setErr(`${f.label} is required.`);
@@ -112,10 +148,39 @@ export function FormSheet({ title, fields, initial, onSave, onClose }: { title: 
             {fields.map((f) => (
               <View key={f.k}>
                 <Text style={s.label}>{f.label}{f.required ? " *" : ""}</Text>
-                {f.options ? <Seg opts={f.options.map((o) => [o, o] as [string, string])} value={v[f.k]} on={(x) => setV({ ...v, [f.k]: x })} />
-                  : <Input value={v[f.k] ?? ""} multiline={f.multiline} keyboardType={f.numeric ? "decimal-pad" : "default"} placeholder={f.placeholder} autoCapitalize={f.k === "url" ? "none" : "sentences"} onChangeText={(x) => setV({ ...v, [f.k]: x })} />}
+                {f.options ? (
+                  <Seg opts={f.options.map((o) => [o, f.optionLabels?.[o] ?? o] as [string, string])} value={v[f.k]} on={(x) => setV({ ...v, [f.k]: x })} />
+                ) : (
+                  <>
+                    <Input
+                      value={v[f.k] ?? ""}
+                      multiline={f.multiline}
+                      keyboardType={f.numeric ? "decimal-pad" : "default"}
+                      placeholder={f.placeholder}
+                      autoCapitalize={f.k === "url" ? "none" : "sentences"}
+                      onChangeText={(x) => setV({ ...v, [f.k]: x })}
+                    />
+                    {f.presets?.length ? (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+                        {f.presets.map((p) => {
+                          const active = (v[f.k] ?? "") === p.value;
+                          return (
+                            <Pressable
+                              key={p.label}
+                              onPress={() => { haptic.selection(); setV({ ...v, [f.k]: p.value }); }}
+                              style={[s.chip, { paddingVertical: 5, paddingHorizontal: 11 }, active && { borderColor: ac }]}
+                            >
+                              <Text style={{ color: active ? ac : C.mu, fontSize: 12 }}>{p.label}</Text>
+                            </Pressable>
+                          );
+                        })}
+                      </ScrollView>
+                    ) : null}
+                  </>
+                )}
               </View>
             ))}
+            {extra}
             {err ? <Text style={{ color: C.bad, marginTop: 10 }} accessibilityRole="alert">{err}</Text> : null}
             <Row><Btn label="Save" onPress={submit} /><Btn label="Cancel" kind="ghost" onPress={onClose} /></Row>
           </ScrollView>

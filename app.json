@@ -6,17 +6,17 @@
     "orientation": "portrait",
     "scheme": "daymark",
     "userInterfaceStyle": "dark",
-    "icon": "./assets/icon.svg",
+    "icon": "./assets/icon.png",
     "splash": {
-      "image": "./assets/splash-icon.svg",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#141414"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon-foreground.svg",
-        "backgroundImage": "./assets/adaptive-icon-background.svg",
-        "monochromeImage": "./assets/adaptive-icon-monochrome.svg"
+        "foregroundImage": "./assets/adaptive-icon-foreground.png",
+        "backgroundImage": "./assets/adaptive-icon-background.png",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png"
       },
       "package": "com.expojet.daymark"
     },
@@ -24,7 +24,12 @@
       "output": "single",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-splash-screen", "expo-sqlite", "expo-notifications"],
+    "plugins": [
+      "expo-router",
+      "expo-splash-screen",
+      "expo-sqlite",
+      "expo-notifications"
+    ],
     "experiments": {
       "typedRoutes": true
     },
@@ -33,6 +38,19 @@
     },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "0b03d8e1-d5bf-48f7-b9fe-9171763b77e3"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0b03d8e1-d5bf-48f7-b9fe-9171763b77e3"
     }
   }
 }

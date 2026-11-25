@@ -20,6 +20,8 @@ const MIGRATIONS = [
    ALTER TABLE tasks ADD COLUMN category TEXT NOT NULL DEFAULT '';
    ALTER TABLE tasks ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0;
    ALTER TABLE wishlist ADD COLUMN notes TEXT NOT NULL DEFAULT '';`,
+  `ALTER TABLE tasks ADD COLUMN subtasks TEXT NOT NULL DEFAULT '[]';
+   ALTER TABLE wishlist ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal';`,
 ];
 export async function migrate() {
   if (!expoDb) {
