@@ -1,6 +1,7 @@
 import React from "react";
 import type { ColorValue } from "react-native";
 import {
+  ArrowLeft,
   Bell,
   Check,
   ChevronRight,
@@ -9,13 +10,16 @@ import {
   EyeOff,
   Home,
   Info,
+  MailOpen,
   type LucideIcon,
   Menu,
   Settings,
+  Trash2,
   User,
 } from "lucide-react-native";
 
 export type IconName =
+  | "arrow-left"
   | "home"
   | "user"
   | "settings"
@@ -26,7 +30,9 @@ export type IconName =
   | "compass"
   | "info"
   | "eye"
-  | "eye-off";
+  | "eye-off"
+  | "trash"
+  | "mail-open";
 
 export interface IconProps {
   name: IconName;
@@ -36,6 +42,7 @@ export interface IconProps {
 }
 
 const ICON_MAP: Record<IconName, LucideIcon> = {
+  "arrow-left": ArrowLeft,
   home: Home,
   user: User,
   settings: Settings,
@@ -47,6 +54,8 @@ const ICON_MAP: Record<IconName, LucideIcon> = {
   info: Info,
   eye: Eye,
   "eye-off": EyeOff,
+  trash: Trash2,
+  "mail-open": MailOpen,
 };
 
 export function Icon({ name, size = 24, color = "#000", strokeWidth = 2 }: IconProps) {

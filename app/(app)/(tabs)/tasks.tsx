@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { Btn, Card, CardMenu, C, Check, Empty, Field, FormSheet, Input, Muted, Row, Screen, Seg, s, useAccent } from "../../src/lib/ui";
-import { addDays, delTask, isValidDate, isValidTime, PRI, saveTask, Subtask, Task, today, tomorrow, uid, useStore } from "../../src/lib/store";
-import { haptic } from "../../src/haptics";
+import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, Input, Muted, Row, Screen, Seg, s, usePalette } from "../../../src/lib/ui";
+import { addDays, delTask, isValidDate, isValidTime, PRI, saveTask, Subtask, Task, today, tomorrow, uid, useStore } from "../../../src/lib/store";
+import { haptic } from "../../../src/haptics";
 
 function getFields(): Field[] {
   return [
@@ -32,7 +32,7 @@ function getFields(): Field[] {
 
 export default function Tasks() {
   const { tasks } = useStore();
-  const ac = useAccent();
+  const p = usePalette();
   const [f, setF] = useState<"all" | "today" | "upcoming" | "overdue" | "completed">("all");
   const [sort, setSort] = useState<"due" | "priority" | "created" | "alpha">("due");
   const [q, setQ] = useState("");
@@ -77,11 +77,11 @@ export default function Tasks() {
           const subs = t.subtasks ?? [];
           const subsDone = subs.filter((x) => x.done).length;
           return (
-            <Card key={t.id} done={t.done} accent={over || (!t.done && t.priority === "urgent") ? C.bad : !t.done && t.priority === "high" ? ac : undefined}>
+            <Card key={t.id} done={t.done} accent={over || (!t.done && t.priority === "urgent") ? p.bad : !t.done && t.priority === "high" ? p.ac : undefined}>
               <View style={{ flexDirection: "row", gap: 12 }}>
                 <Check on={t.done} label={`${t.done ? "Reopen" : "Complete"} ${t.title}`} onPress={() => saveTask({ ...t, done: !t.done })} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[{ color: C.tx, fontWeight: "500" }, t.done && { textDecorationLine: "line-through" }]}>{t.title}</Text>
+                  <Text style={[{ color: p.tx, fontWeight: "500" }, t.done && { textDecorationLine: "line-through" }]}>{t.title}</Text>
                   {t.notes ? <Muted t={t.notes} /> : null}
                   <Muted
                     t={[
@@ -104,10 +104,10 @@ export default function Tasks() {
                           }}
                           style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
                         >
-                          <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 1, borderColor: sub.done ? ac : C.mu, backgroundColor: sub.done ? ac : "transparent", alignItems: "center", justifyContent: "center" }}>
-                            {sub.done ? <Text style={{ color: C.bg, fontSize: 10, fontWeight: "700" }}>✓</Text> : null}
+                          <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 1, borderColor: sub.done ? p.ac : p.mu, backgroundColor: sub.done ? p.ac : "transparent", alignItems: "center", justifyContent: "center" }}>
+                            {sub.done ? <Text style={{ color: p.isDark ? "#101114" : "#FFFFFF", fontSize: 10, fontWeight: "700" }}>✓</Text> : null}
                           </View>
-                          <Text style={[{ color: C.mu, fontSize: 13 }, sub.done && { textDecorationLine: "line-through" }]}>{sub.title}</Text>
+                          <Text style={[{ color: p.mu, fontSize: 13 }, sub.done && { textDecorationLine: "line-through" }]}>{sub.title}</Text>
                         </Pressable>
                       ))}
                     </View>
@@ -128,18 +128,18 @@ export default function Tasks() {
           onClose={() => setEdit(null)}
           extra={(
             <View style={{ marginTop: 12 }}>
-              <Text style={s.label}>Checklist subtasks</Text>
+              <Text style={[s.label, { color: p.mu }]}>Checklist subtasks</Text>
               <View style={{ flexDirection: "row", gap: 8 }}>
                 <Input style={{ flex: 1 }} placeholder="Add a subtask" value={newSub} onChangeText={setNewSub} onSubmitEditing={addDraftSub} />
                 <Btn label="Add" kind="ghost" onPress={addDraftSub} />
               </View>
               {draftSubs.map((sub) => (
-                <View key={sub.id} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 6, borderBottomColor: C.line, borderBottomWidth: 1 }}>
+                <View key={sub.id} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 6, borderBottomColor: p.line, borderBottomWidth: 1 }}>
                   <Pressable onPress={() => setDraftSubs((prev) => prev.map((x) => (x.id === sub.id ? { ...x, done: !x.done } : x)))} style={{ flex: 1 }}>
-                    <Text style={[{ color: C.tx }, sub.done && { textDecorationLine: "line-through", color: C.mu }]}>• {sub.title}</Text>
+                    <Text style={[{ color: p.tx }, sub.done && { textDecorationLine: "line-through", color: p.mu }]}>• {sub.title}</Text>
                   </Pressable>
                   <Pressable onPress={() => setDraftSubs((prev) => prev.filter((x) => x.id !== sub.id))} hitSlop={8}>
-                    <Text style={{ color: C.bad, fontSize: 12 }}>Remove</Text>
+                    <Text style={{ color: p.bad, fontSize: 12 }}>Remove</Text>
                   </Pressable>
                 </View>
               ))}

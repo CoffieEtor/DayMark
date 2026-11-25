@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { Btn, Card, CardMenu, C, Check, Empty, Field, FormSheet, H2, Input, Muted, Row, Screen, Seg } from "../../src/lib/ui";
-import { delReminder, isValidDate, isValidTime, Reminder, reminderDate, saveReminder, snoozeReminder, today, tomorrow, uid, useStore } from "../../src/lib/store";
-import { haptic } from "../../src/haptics";
+import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, H2, Input, Muted, Row, Screen, Seg, usePalette } from "../../../src/lib/ui";
+import { delReminder, isValidDate, isValidTime, Reminder, reminderDate, saveReminder, snoozeReminder, today, tomorrow, uid, useStore } from "../../../src/lib/store";
+import { haptic } from "../../../src/haptics";
 
 function getFields(): Field[] {
   return [
@@ -33,6 +33,7 @@ function getFields(): Field[] {
 
 export default function Reminders() {
   const { reminders, notify } = useStore();
+  const p = usePalette();
   const [f, setF] = useState<"all" | "today" | "tomorrow" | "upcoming" | "overdue" | "completed">("all");
   const [q, setQ] = useState("");
   const [edit, setEdit] = useState<Reminder | "new" | null>(null);
@@ -52,26 +53,26 @@ export default function Reminders() {
   const card = (r: Reminder) => {
     const over = !r.done && reminderDate(r) < now;
     return (
-      <Card key={r.id} done={r.done} accent={over ? C.bad : undefined}>
+      <Card key={r.id} done={r.done} accent={over ? p.bad : undefined}>
         <View style={{ flexDirection: "row", gap: 12 }}>
           <Check on={r.done} label={`${r.done ? "Reopen" : "Complete"} ${r.title}`} onPress={() => saveReminder({ ...r, done: !r.done })} />
           <View style={{ flex: 1 }}>
-            <Text style={[{ color: C.tx, fontWeight: "500" }, r.done && { textDecorationLine: "line-through" }]}>{r.title}</Text>
+            <Text style={[{ color: p.tx, fontWeight: "500" }, r.done && { textDecorationLine: "line-through" }]}>{r.title}</Text>
             {r.desc ? <Muted t={r.desc} /> : null}
             <Muted t={(over ? "Overdue · " : "") + `${r.date} at ${r.time}`} bad={over} />
             {!r.done ? (
               <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
                 <Pressable
                   onPress={() => { haptic.selection(); void snoozeReminder(r, "1h"); }}
-                  style={{ borderColor: C.line, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: C.s2 }}
+                  style={{ borderColor: p.line, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: p.s2 }}
                 >
-                  <Text style={{ color: C.tx, fontSize: 12 }}>+1h</Text>
+                  <Text style={{ color: p.tx, fontSize: 12 }}>+1h</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => { haptic.selection(); void snoozeReminder(r, "tomorrow"); }}
-                  style={{ borderColor: C.line, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: C.s2 }}
+                  style={{ borderColor: p.line, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: p.s2 }}
                 >
-                  <Text style={{ color: C.tx, fontSize: 12 }}>Tomorrow 9 AM</Text>
+                  <Text style={{ color: p.tx, fontSize: 12 }}>Tomorrow 9 AM</Text>
                 </Pressable>
               </View>
             ) : null}

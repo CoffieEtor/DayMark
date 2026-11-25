@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Linking, Text, View } from "react-native";
-import { Btn, Card, CardMenu, C, Check, Empty, Field, FormSheet, Input, Muted, Row, Screen, Seg, s, useAccent } from "../../src/lib/ui";
-import { delWish, money, saveWish, uid, useStore, Wish, WishPriority } from "../../src/lib/store";
-import { haptic } from "../../src/haptics";
+import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, Input, Muted, Row, Screen, Seg, s, usePalette } from "../../../src/lib/ui";
+import { delWish, money, saveWish, uid, useStore, Wish, WishPriority } from "../../../src/lib/store";
+import { haptic } from "../../../src/haptics";
 
 const CATEGORIES = ["Tech", "Workspace", "Home", "Books", "Clothing", "Travel"];
 const PRI_LABEL: Record<WishPriority, string> = { low: "Low Need", normal: "Medium Priority", high: "High / Top Dream" };
@@ -25,7 +25,7 @@ const FIELDS: Field[] = [
 
 export default function Wishlist() {
   const { wishlist, currency } = useStore();
-  const ac = useAccent();
+  const p = usePalette();
   const [tab, setTab] = useState<"all" | "active" | "bought">("active");
   const [cat, setCat] = useState<string>("all");
   const [sort, setSort] = useState<"priority" | "price_asc" | "price_desc" | "alpha">("priority");
@@ -95,15 +95,15 @@ export default function Wishlist() {
     <Screen title="Wishlist" sub={`${money(estCost, currency)} across ${act.length} unpurchased`}>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
         {kpis.map(([val, lbl]) => (
-          <View key={lbl} style={[s.card, { width: "48%", marginBottom: 0 }]}>
-            <Text style={{ color: C.tx, fontSize: 20, fontWeight: "600" }}>{val}</Text>
+          <View key={lbl} style={[s.card, { backgroundColor: p.s1, borderColor: p.line, width: "48%", marginBottom: 0 }]}>
+            <Text style={{ color: p.tx, fontSize: 20, fontWeight: "600" }}>{val}</Text>
             <Muted t={lbl} />
           </View>
         ))}
       </View>
 
-      <View style={[s.card, { padding: 18, marginTop: 12 }]}>
-        <Text style={{ color: ac, fontSize: 12, fontWeight: "700", letterSpacing: 1.2 }}>PICK FOR ME</Text>
+      <View style={[s.card, { backgroundColor: p.s1, borderColor: p.line, padding: 18, marginTop: 12 }]}>
+        <Text style={{ color: p.ac, fontSize: 12, fontWeight: "700", letterSpacing: 1.2 }}>PICK FOR ME</Text>
         <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
           <Input
             style={{ flex: 1 }}
@@ -117,10 +117,10 @@ export default function Wishlist() {
           <Seg opts={[["all", "Any category"], ...cats.map((c) => [c, c] as [string, string])]} value={pickCat} on={setPickCat} />
         ) : null}
         <View style={{ alignItems: "center", paddingTop: 10 }}>
-          <Text style={{ color: C.tx, fontSize: 22, fontWeight: "600", minHeight: 30, opacity: spin ? 0.5 : 1 }} accessibilityLiveRegion="polite">
+          <Text style={{ color: p.tx, fontSize: 22, fontWeight: "600", minHeight: 30, opacity: spin ? 0.5 : 1 }} accessibilityLiveRegion="polite">
             {cur ? cur.name : act.length ? (pool.length ? "Ready to pick" : "No items fit budget/category") : "Your wishlist is empty"}
           </Text>
-          <Text style={{ color: ac, fontSize: 18, minHeight: 24 }}>{cur && !spin ? `${money(cur.price, currency)} · ${PRI_LABEL[cur.priority]}` : ""}</Text>
+          <Text style={{ color: p.ac, fontSize: 18, minHeight: 24 }}>{cur && !spin ? `${money(cur.price, currency)} · ${PRI_LABEL[cur.priority]}` : ""}</Text>
           <Row>
             <Btn label={cur && !spin ? "Pick again" : "Pick for me"} onPress={pick} disabled={!pool.length || spin} />
             {cur && !spin ? <Btn label="Mark purchased" kind="ghost" onPress={() => { void saveWish({ ...cur, purchased: true }); setShown(null); haptic.success(); }} /> : null}
@@ -137,15 +137,15 @@ export default function Wishlist() {
 
       <View style={{ marginTop: 10 }}>
         {list.length ? list.map((w) => (
-          <Card key={w.id} done={w.purchased} accent={!w.purchased && w.priority === "high" ? ac : undefined}>
+          <Card key={w.id} done={w.purchased} accent={!w.purchased && w.priority === "high" ? p.ac : undefined}>
             <View style={{ flexDirection: "row", gap: 12 }}>
               <Check on={w.purchased} label={`${w.purchased ? "Restore" : "Mark purchased"} ${w.name}`} onPress={() => saveWish({ ...w, purchased: !w.purchased })} />
               <View style={{ flex: 1 }}>
-                <Text style={{ color: C.tx, fontWeight: "500" }}>{w.name}</Text>
+                <Text style={{ color: p.tx, fontWeight: "500" }}>{w.name}</Text>
                 {w.desc ? <Muted t={w.desc} /> : null}
                 <Muted t={[money(w.price, currency), PRI_LABEL[w.priority], w.category].filter(Boolean).join(" · ")} />
                 {w.notes ? <Muted t={`Note: ${w.notes}`} /> : null}
-                {w.url ? <Text style={{ color: ac, fontSize: 13 }} onPress={() => Linking.openURL(w.url).catch(() => {})}>Open link</Text> : null}
+                {w.url ? <Text style={{ color: p.ac, fontSize: 13 }} onPress={() => Linking.openURL(w.url).catch(() => {})}>Open link</Text> : null}
               </View>
               <CardMenu label={w.name} onEdit={() => setEdit(w)} onDelete={() => delWish(w.id)} />
             </View>

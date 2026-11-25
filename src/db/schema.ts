@@ -19,4 +19,16 @@ export const wishlist = sqliteTable("wishlist", {
   priority: text("priority").notNull().default("normal"), notes: text("notes").notNull().default(""),
   purchased: integer("purchased", { mode: "boolean" }).notNull().default(false), updatedAt: integer("updated_at").notNull(),
 });
+export const notifications = sqliteTable("notifications", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  body: text("body").notNull().default(""),
+  date: text("date").notNull().default(""),
+  time: text("time").notNull().default(""),
+  kind: text("kind").notNull().default("system"),
+  refId: text("ref_id"),
+  read: integer("read", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at").notNull().default(0),
+  updatedAt: integer("updated_at").notNull(),
+});
 export const settings = sqliteTable("settings", { key: text("key").primaryKey(), value: text("value").notNull() });

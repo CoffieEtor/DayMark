@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
-import { Btn, Card, C, H2, Muted, Screen, Empty, s, useAccent } from "../../src/lib/ui";
-import { enableNotifications, money, PRI, reminderDate, today, useStore } from "../../src/lib/store";
-import { haptic } from "../../src/haptics";
+import { Btn, Card, H2, Muted, Screen, Empty, s, usePalette } from "../../../src/lib/ui";
+import { enableNotifications, money, PRI, reminderDate, today, useStore } from "../../../src/lib/store";
+import { haptic } from "../../../src/haptics";
 
 export default function Dashboard() {
   const st = useStore();
-  const ac = useAccent();
+  const p = usePalette();
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const td = today();
@@ -37,8 +37,8 @@ export default function Dashboard() {
       {st.error ? <Muted t={st.error} bad /> : null}
 
       {!st.notify && !bannerDismissed ? (
-        <View style={[s.card, { borderColor: ac, marginTop: 14 }]}>
-          <Text style={{ color: C.tx, fontWeight: "600" }}>Enable reminder notifications</Text>
+        <View style={[s.card, { backgroundColor: p.s1, borderColor: p.ac, marginTop: 14 }]}>
+          <Text style={{ color: p.tx, fontWeight: "600" }}>Enable reminder notifications</Text>
           <Muted t="Get alerted for scheduled reminders even when DAYMARK is closed." />
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
             <Btn label="Enable" onPress={() => void enableNotifications()} />
@@ -47,13 +47,13 @@ export default function Dashboard() {
         </View>
       ) : null}
 
-      <View style={[s.card, { marginTop: 14 }]}>
+      <View style={[s.card, { backgroundColor: p.s1, borderColor: p.line, marginTop: 14 }]}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-          <Text style={{ color: C.tx, fontWeight: "600" }}>Daily completion</Text>
-          <Text style={{ color: ac, fontWeight: "700" }}>{pct}%</Text>
+          <Text style={{ color: p.tx, fontWeight: "600" }}>Daily completion</Text>
+          <Text style={{ color: p.ac, fontWeight: "700" }}>{pct}%</Text>
         </View>
-        <View style={{ height: 8, borderRadius: 999, backgroundColor: C.s2, overflow: "hidden" }}>
-          <View style={{ height: "100%", width: `${pct}%`, backgroundColor: ac, borderRadius: 999 }} />
+        <View style={{ height: 8, borderRadius: 999, backgroundColor: p.s2, overflow: "hidden" }}>
+          <View style={{ height: "100%", width: `${pct}%`, backgroundColor: p.ac, borderRadius: 999 }} />
         </View>
         <View style={{ marginTop: 6 }}>
           <Muted t={todayTasks.length ? `${todayDone} of ${todayTasks.length} tasks due today completed` : "No tasks scheduled for today yet"} />
@@ -66,10 +66,10 @@ export default function Dashboard() {
             key={c.title}
             accessibilityRole="button"
             onPress={() => { haptic.selection(); router.navigate(c.href as any); }}
-            style={[s.card, { width: "48%", marginBottom: 0 }]}
+            style={[s.card, { backgroundColor: p.s1, borderColor: p.line, width: "48%", marginBottom: 0 }]}
           >
-            <Text style={{ color: C.mu, fontSize: 12, fontWeight: "600" }}>{c.title}</Text>
-            <Text style={{ color: c.warn ? C.bad : C.tx, fontSize: 28, fontWeight: "700", marginVertical: 2 }}>{c.count}</Text>
+            <Text style={{ color: p.mu, fontSize: 12, fontWeight: "600" }}>{c.title}</Text>
+            <Text style={{ color: c.warn ? p.bad : p.tx, fontSize: 28, fontWeight: "700", marginVertical: 2 }}>{c.count}</Text>
             <Muted t={c.sub} bad={c.warn} />
           </Pressable>
         ))}
@@ -77,8 +77,8 @@ export default function Dashboard() {
 
       <H2 t="Priority blockers" />
       {blockers.length ? blockers.map((t) => (
-        <Card key={t.id} accent={t.priority === "urgent" ? C.bad : ac}>
-          <Text style={{ color: C.tx }}>{t.title}</Text>
+        <Card key={t.id} accent={t.priority === "urgent" ? p.bad : p.ac}>
+          <Text style={{ color: p.tx }}>{t.title}</Text>
           <Muted t={[t.priority, t.due && `due ${t.due}`, t.dueTime, t.category].filter(Boolean).join(" · ")} bad={!!t.due && t.due < td} />
         </Card>
       )) : <Empty t="No high-priority blockers" sub="Urgent and high-priority tasks appear here." />}
@@ -86,14 +86,14 @@ export default function Dashboard() {
       <H2 t="Upcoming reminders" />
       {actReminders.slice(0, 3).length ? actReminders.slice(0, 3).map((r) => (
         <Card key={r.id}>
-          <Text style={{ color: C.tx }}>{r.title}</Text>
+          <Text style={{ color: p.tx }}>{r.title}</Text>
           <Muted t={`${r.date} at ${r.time}`} bad={reminderDate(r) < new Date()} />
         </Card>
       )) : <Empty t="No reminders" sub="Add one in the Reminders section." />}
 
       <H2 t="Wishlist summary" />
       <Card>
-        <Text style={{ color: C.tx, fontWeight: "600" }}>{wl.length} item{wl.length === 1 ? "" : "s"} waiting</Text>
+        <Text style={{ color: p.tx, fontWeight: "600" }}>{wl.length} item{wl.length === 1 ? "" : "s"} waiting</Text>
         <Muted t={`${money(wl.reduce((a, w) => a + w.price, 0), st.currency)} estimated · ${bought.length} acquired (${money(bought.reduce((a, w) => a + w.price, 0), st.currency)})`} />
       </Card>
     </Screen>

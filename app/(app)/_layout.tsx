@@ -1,57 +1,22 @@
-import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { router, Tabs, usePathname } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Icon, type IconName } from "../../src/components/ui/icon";
 import { haptic } from "../../src/haptics";
-import { C, useAccent } from "../../src/lib/ui";
-import { dismissDueAlert, saveReminder, setTourStep, useStore } from "../../src/lib/store";
-
-// const DRAWER_W = 270;
-const T: [string, string, IconName, string][] = [
-  ["index", "Today", "home", "/"],
-  ["tasks", "Tasks", "check", "/tasks"],
-  ["reminders", "Reminders", "bell", "/reminders"],
-  ["wishlist", "Wishlist", "compass", "/wishlist"],
-  ["settings", "Settings", "settings", "/settings"],
-];
+import { usePalette } from "../../src/lib/ui";
+import { setTourStep, useStore } from "../../src/lib/store";
 
 const TOUR_STEPS: { title: string; body: string; href: string }[] = [
   { title: "1. Tasks", body: "Capture tasks with priorities, quick due presets, categories, and checklist subtasks.", href: "/tasks" },
   { title: "2. Reminders", body: "Schedule alerts with Morning/Afternoon/Evening presets and one-tap snooze.", href: "/reminders" },
   { title: "3. Wishlist & Picker", body: "Track planned purchases and let Pick for me choose within your budget.", href: "/wishlist" },
-  { title: "4. Settings", body: "Customize accent colors, currency, haptics, notifications, and JSON backups.", href: "/settings" },
+  { title: "4. Settings", body: "Customize dark/light mode, accent colors, swipe actions, currency, and backups.", href: "/settings" },
 ];
 
 export default function Layout() {
-  // const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
-  const pathname = usePathname();
-  const ac = useAccent();
-  const { dueAlert, tourStep } = useStore();
-  // const slide = useRef(new Animated.Value(-DRAWER_W)).current;
-
-  // useEffect(() => {
-  //   if (open) {
-  //     slide.setValue(-DRAWER_W);
-  //     Animated.timing(slide, {
-  //       toValue: 0,
-  //       duration: 220,
-  //       useNativeDriver: Platform.OS !== "web",
-  //     }).start();
-  //   }
-  // }, [open, slide]);
-
-  // const close = (after?: () => void) => {
-  //   Animated.timing(slide, {
-  //     toValue: -DRAWER_W,
-  //     duration: 180,
-  //     useNativeDriver: Platform.OS !== "web",
-  //   }).start(() => {
-  //     setOpen(false);
-  //     after?.();
-  //   });
-  // };
+  const p = usePalette();
+  const { tourStep } = useStore();
+  const onBtnTx = p.isDark ? "#101114" : "#FFFFFF";
 
   const tour = tourStep !== null ? TOUR_STEPS[tourStep] : null;
   const advanceTour = (next: number | null) => {
@@ -62,249 +27,69 @@ export default function Layout() {
       return;
     }
     setTourStep(next);
-    router.navigate(TOUR_STEPS[next].href as any);
+    if (TOUR_STEPS[next].href === "/settings") {
+      router.push("/settings" as any);
+    } else {
+      router.navigate(TOUR_STEPS[next].href as any);
+    }
   };
 
-  useEffect(() => {
-    if (tourStep === 0 && pathname !== "/tasks") {
-      router.navigate("/tasks" as any);
-    }
-  }, [tourStep, pathname]);
+  const stackHeader = {
+    headerShown: true,
+    headerStyle: { backgroundColor: p.bg },
+    headerTintColor: p.tx,
+    headerTitleStyle: { color: p.tx, fontWeight: "700" as const },
+    headerShadowVisible: false,
+    animation: "slide_from_right" as const,
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg }}>
-      {/*
-      <View style={[st.topBar, { paddingTop: insets.top + 10 }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open navigation menu"
-          hitSlop={10}
-          onPress={() => { haptic.light(); setOpen(true); }}
-          style={st.menuBtn}
-        >
-          <Icon name="menu" size={20} color={C.tx} />
-        </Pressable>
-        <Text style={st.brand}>DAYMARK</Text>
-      </View>
-      */}
-
-      {dueAlert ? (
-        <View style={[st.alertBanner, { borderColor: ac, marginTop: insets.top + 8 }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={st.alertTitle}>Reminder: {dueAlert.title}</Text>
-            <Text style={st.alertSub}>{dueAlert.desc || `${dueAlert.date} at ${dueAlert.time}`}</Text>
-          </View>
-          <Pressable onPress={() => { saveReminder({ ...dueAlert, done: true }); dismissDueAlert(); haptic.success(); }} style={[st.alertBtn, { backgroundColor: ac }]}>
-            <Text style={{ color: C.bg, fontWeight: "600", fontSize: 12 }}>Done</Text>
-          </Pressable>
-          <Pressable onPress={() => dismissDueAlert()} style={st.alertDismiss}>
-            <Text style={{ color: C.mu, fontSize: 12 }}>Dismiss</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
-      <Tabs
+    <View style={{ flex: 1, backgroundColor: p.bg }}>
+      <Stack
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: ac,
-          tabBarInactiveTintColor: C.mu,
-          tabBarStyle: { backgroundColor: C.bg, borderTopColor: C.line },
+          animation: "slide_from_right",
+          gestureEnabled: true,
+          contentStyle: { backgroundColor: p.bg },
         }}
       >
-        {T.map(([name, title, icon]) => (
-          <Tabs.Screen
-            key={name}
-            name={name}
-            options={{
-              title,
-              tabBarIcon: ({ color, size }) => <Icon name={icon} color={color} size={size} />,
-            }}
-            listeners={{ tabPress: () => haptic.selection() }}
-          />
-        ))}
-      </Tabs>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ ...stackHeader, title: "Settings" }} />
+        <Stack.Screen name="notifications" options={{ ...stackHeader, title: "Notifications" }} />
+        <Stack.Screen name="swipe-actions" options={{ ...stackHeader, title: "Swipe actions" }} />
+      </Stack>
 
       {tour ? (
-        <View style={[st.tourCard, { bottom: insets.bottom + 72, borderColor: ac }]}>
+        <View style={[st.tourCard, { bottom: insets.bottom + 72, backgroundColor: p.s1, borderColor: p.ac }]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <Text style={[st.tourTitle, { color: ac }]}>{tour.title}</Text>
+            <Text style={[st.tourTitle, { color: p.ac }]}>{tour.title}</Text>
             <Pressable onPress={() => advanceTour(null)} hitSlop={8}>
-              <Text style={{ color: C.mu, fontSize: 12, fontWeight: "600" }}>Skip</Text>
+              <Text style={{ color: p.mu, fontSize: 12, fontWeight: "600" }}>Skip</Text>
             </Pressable>
           </View>
-          <Text style={st.tourBody}>{tour.body}</Text>
+          <Text style={[st.tourBody, { color: p.tx }]}>{tour.body}</Text>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-            <Text style={{ color: C.mu, fontSize: 12 }}>{(tourStep ?? 0) + 1} / {TOUR_STEPS.length}</Text>
+            <Text style={{ color: p.mu, fontSize: 12 }}>{(tourStep ?? 0) + 1} / {TOUR_STEPS.length}</Text>
             <Pressable
               onPress={() => advanceTour((tourStep ?? 0) + 1)}
-              style={[st.tourBtn, { backgroundColor: ac }]}
+              style={[st.tourBtn, { backgroundColor: p.ac }]}
             >
-              <Text style={{ color: C.bg, fontWeight: "700", fontSize: 13 }}>
+              <Text style={{ color: onBtnTx, fontWeight: "700", fontSize: 13 }}>
                 {(tourStep ?? 0) === TOUR_STEPS.length - 1 ? "Done" : "Next"}
               </Text>
             </Pressable>
           </View>
         </View>
       ) : null}
-
-      {/*
-      {open ? (
-        <Modal animationType="none" transparent statusBarTranslucent visible onRequestClose={() => close()}>
-          <View style={st.overlay}>
-            <Pressable style={st.backdrop} onPress={() => close()} />
-            <Animated.View
-              style={[
-                st.drawer,
-                {
-                  width: DRAWER_W,
-                  paddingTop: insets.top + 8,
-                  paddingBottom: insets.bottom + 20,
-                  transform: [{ translateX: slide }],
-                },
-              ]}
-            >
-              <View style={st.drawerHeader}>
-                <Text style={st.drawerBrand}>DAYMARK</Text>
-                <Text style={st.heading}>Menu</Text>
-              </View>
-              {T.map(([name, title, icon, href]) => {
-                const active = pathname === href || (name === "index" && (pathname === "/" || pathname === "/(app)"));
-                return (
-                  <Pressable
-                    key={name}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    onPress={() => {
-                      haptic.selection();
-                      close(() => router.navigate(href as any));
-                    }}
-                    style={[st.item, active && st.itemActive]}
-                  >
-                    <Icon name={icon} size={20} color={active ? ac : C.mu} />
-                    <Text style={[st.itemText, active && { color: ac, fontWeight: "600" }]}>{title}</Text>
-                  </Pressable>
-                );
-              })}
-            </Animated.View>
-          </View>
-        </Modal>
-      ) : null}
-      */}
     </View>
   );
 }
 
 const st = StyleSheet.create({
-  // topBar: {
-  //   flexDirection: "row",
-  //   alignItems: "center",
-  //   gap: 12,
-  //   paddingHorizontal: 18,
-  //   paddingBottom: 6,
-  //   backgroundColor: C.bg,
-  // },
-  // menuBtn: {
-  //   width: 40,
-  //   height: 40,
-  //   borderRadius: 10,
-  //   backgroundColor: C.s1,
-  //   borderColor: C.line,
-  //   borderWidth: 1,
-  //   alignItems: "center",
-  //   justifyContent: "center",
-  // },
-  // brand: {
-  //   color: C.mu,
-  //   fontSize: 13,
-  //   fontWeight: "600",
-  //   letterSpacing: 1.5,
-  // },
-  // overlay: {
-  //   flex: 1,
-  //   flexDirection: "row",
-  // },
-  // backdrop: {
-  //   position: "absolute",
-  //   top: 0,
-  //   right: 0,
-  //   bottom: 0,
-  //   left: 0,
-  //   backgroundColor: "rgba(0,0,0,.6)",
-  // },
-  // drawer: {
-  //   height: "100%",
-  //   backgroundColor: C.bg,
-  //   paddingHorizontal: 16,
-  //   borderRightColor: C.line,
-  //   borderRightWidth: 1,
-  //   gap: 6,
-  // },
-  // drawerHeader: {
-  //   marginBottom: 12,
-  //   paddingHorizontal: 4,
-  // },
-  // drawerBrand: {
-  //   color: C.tx,
-  //   fontSize: 18,
-  //   fontWeight: "700",
-  //   letterSpacing: 1.5,
-  // },
-  // heading: {
-  //   color: C.mu,
-  //   fontSize: 12,
-  //   fontWeight: "600",
-  //   marginTop: 2,
-  // },
-  // item: {
-  //   flexDirection: "row",
-  //   alignItems: "center",
-  //   gap: 12,
-  //   paddingVertical: 12,
-  //   paddingHorizontal: 14,
-  //   borderRadius: 10,
-  // },
-  // itemActive: {
-  //   backgroundColor: C.s1,
-  //   borderColor: C.line,
-  //   borderWidth: 1,
-  // },
-  // itemText: {
-  //   color: C.tx,
-  //   fontSize: 16,
-  // },
-  alertBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginHorizontal: 18,
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: C.s1,
-    borderWidth: 1,
-  },
-  alertTitle: {
-    color: C.tx,
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  alertSub: {
-    color: C.mu,
-    fontSize: 12,
-  },
-  alertBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  alertDismiss: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
   tourCard: {
     position: "absolute",
     left: 18,
     right: 18,
-    backgroundColor: C.s1,
     borderWidth: 1,
     borderRadius: 14,
     padding: 16,
@@ -315,7 +100,6 @@ const st = StyleSheet.create({
     fontWeight: "700",
   },
   tourBody: {
-    color: C.tx,
     fontSize: 14,
     marginTop: 6,
     lineHeight: 20,
