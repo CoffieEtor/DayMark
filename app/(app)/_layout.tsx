@@ -4,8 +4,8 @@ import { router, Tabs, usePathname } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, type IconName } from "../../src/components/ui/icon";
 import { haptic } from "../../src/haptics";
-import { C } from "../../src/lib/ui";
-import { dismissDueAlert, saveReminder, useStore } from "../../src/lib/store";
+import { C, useAccent } from "../../src/lib/ui";
+import { dismissDueAlert, saveReminder, setTourStep, useStore } from "../../src/lib/store";
 
 const DRAWER_W = 270;
 const T: [string, string, IconName, string][] = [
@@ -16,11 +16,19 @@ const T: [string, string, IconName, string][] = [
   ["settings", "Settings", "settings", "/settings"],
 ];
 
+const TOUR_STEPS: { title: string; body: string; href: string }[] = [
+  { title: "1. Tasks", body: "Capture tasks with priorities, quick due presets, categories, and checklist subtasks.", href: "/tasks" },
+  { title: "2. Reminders", body: "Schedule alerts with Morning/Afternoon/Evening presets and one-tap snooze.", href: "/reminders" },
+  { title: "3. Wishlist & Picker", body: "Track planned purchases and let Pick for me choose within your budget.", href: "/wishlist" },
+  { title: "4. Settings", body: "Customize accent colors, currency, haptics, notifications, and JSON backups.", href: "/settings" },
+];
+
 export default function Layout() {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const { dueAlert } = useStore();
+  const ac = useAccent();
+  const { dueAlert, tourStep } = useStore();
   const slide = useRef(new Animated.Value(-DRAWER_W)).current;
 
   useEffect(() => {
@@ -45,6 +53,24 @@ export default function Layout() {
     });
   };
 
+  const tour = tourStep !== null ? TOUR_STEPS[tourStep] : null;
+  const advanceTour = (next: number | null) => {
+    haptic.selection();
+    if (next === null || next >= TOUR_STEPS.length) {
+      setTourStep(null);
+      router.navigate("/" as any);
+      return;
+    }
+    setTourStep(next);
+    router.navigate(TOUR_STEPS[next].href as any);
+  };
+
+  useEffect(() => {
+    if (tourStep === 0 && pathname !== "/tasks") {
+      router.navigate("/tasks" as any);
+    }
+  }, [tourStep, pathname]);
+
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={[st.topBar, { paddingTop: insets.top + 10 }]}>
@@ -61,12 +87,12 @@ export default function Layout() {
       </View>
 
       {dueAlert ? (
-        <View style={st.alertBanner}>
+        <View style={[st.alertBanner, { borderColor: ac }]}>
           <View style={{ flex: 1 }}>
             <Text style={st.alertTitle}>Reminder: {dueAlert.title}</Text>
             <Text style={st.alertSub}>{dueAlert.desc || `${dueAlert.date} at ${dueAlert.time}`}</Text>
           </View>
-          <Pressable onPress={() => { saveReminder({ ...dueAlert, done: true }); dismissDueAlert(); haptic.success(); }} style={st.alertBtn}>
+          <Pressable onPress={() => { saveReminder({ ...dueAlert, done: true }); dismissDueAlert(); haptic.success(); }} style={[st.alertBtn, { backgroundColor: ac }]}>
             <Text style={{ color: C.bg, fontWeight: "600", fontSize: 12 }}>Done</Text>
           </Pressable>
           <Pressable onPress={() => dismissDueAlert()} style={st.alertDismiss}>
@@ -80,6 +106,29 @@ export default function Layout() {
           <Tabs.Screen key={name} name={name} options={{ title }} />
         ))}
       </Tabs>
+
+      {tour ? (
+        <View style={[st.tourCard, { bottom: insets.bottom + 18, borderColor: ac }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={[st.tourTitle, { color: ac }]}>{tour.title}</Text>
+            <Pressable onPress={() => advanceTour(null)} hitSlop={8}>
+              <Text style={{ color: C.mu, fontSize: 12, fontWeight: "600" }}>Skip</Text>
+            </Pressable>
+          </View>
+          <Text style={st.tourBody}>{tour.body}</Text>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+            <Text style={{ color: C.mu, fontSize: 12 }}>{(tourStep ?? 0) + 1} / {TOUR_STEPS.length}</Text>
+            <Pressable
+              onPress={() => advanceTour((tourStep ?? 0) + 1)}
+              style={[st.tourBtn, { backgroundColor: ac }]}
+            >
+              <Text style={{ color: C.bg, fontWeight: "700", fontSize: 13 }}>
+                {(tourStep ?? 0) === TOUR_STEPS.length - 1 ? "Done" : "Next"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
 
       {open ? (
         <Modal animationType="none" transparent statusBarTranslucent visible onRequestClose={() => close()}>
@@ -113,8 +162,8 @@ export default function Layout() {
                     }}
                     style={[st.item, active && st.itemActive]}
                   >
-                    <Icon name={icon} size={20} color={active ? C.ac : C.mu} />
-                    <Text style={[st.itemText, active && { color: C.ac, fontWeight: "600" }]}>{title}</Text>
+                    <Icon name={icon} size={20} color={active ? ac : C.mu} />
+                    <Text style={[st.itemText, active && { color: ac, fontWeight: "600" }]}>{title}</Text>
                   </Pressable>
                 );
               })}
@@ -213,7 +262,6 @@ const st = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     backgroundColor: C.s1,
-    borderColor: C.ac,
     borderWidth: 1,
   },
   alertTitle: {
@@ -226,7 +274,6 @@ const st = StyleSheet.create({
     fontSize: 12,
   },
   alertBtn: {
-    backgroundColor: C.ac,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -234,5 +281,30 @@ const st = StyleSheet.create({
   alertDismiss: {
     paddingHorizontal: 8,
     paddingVertical: 6,
+  },
+  tourCard: {
+    position: "absolute",
+    left: 18,
+    right: 18,
+    backgroundColor: C.s1,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+    zIndex: 30,
+  },
+  tourTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  tourBody: {
+    color: C.tx,
+    fontSize: 14,
+    marginTop: 6,
+    lineHeight: 20,
+  },
+  tourBtn: {
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
 });
