@@ -15,7 +15,7 @@ export function useAccent(): string {
 export function Screen({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   const i = useSafeAreaInsets();
   return (
-    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 18, paddingTop: 10, paddingBottom: i.bottom + 40 }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={{ padding: 18, paddingTop: i.top + 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <Text style={s.h1} accessibilityRole="header">{title}</Text>
       {sub ? <Text style={s.mu}>{sub}</Text> : null}
       {children}
