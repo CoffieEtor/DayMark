@@ -3,6 +3,7 @@ import { Alert, Platform, Pressable, Share, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Icon } from "../../src/components/ui/icon";
 import { Btn, Card, H2, Input, Muted, Row, Screen, Seg, usePalette } from "../../src/lib/ui";
+import { isIOSWeb, isWebStandalone } from "../../src/lib/pwa";
 import {
   ACCENTS,
   AccentKey,
@@ -135,7 +136,13 @@ export default function Settings() {
                 setMsg("Notifications turned off.");
               } else {
                 const ok = await enableNotifications();
-                setMsg(ok ? "Notifications turned on." : "Permission denied. Enable it in Device Settings.");
+                if (ok) {
+                  setMsg("Notifications turned on.");
+                } else if (Platform.OS === "web" && isIOSWeb() && !isWebStandalone()) {
+                  setMsg("Install DAYMARKED via Share → Add to Home Screen first to enable iPhone notifications.");
+                } else {
+                  setMsg("Permission denied. Enable notifications in Device Settings.");
+                }
               }
             }}
           />

@@ -4,11 +4,12 @@ import { Platform } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { init } from "../src/lib/store";
+import { initPwaListeners } from "../src/lib/pwa";
 import { usePalette } from "../src/lib/ui";
 
 export default function RootLayout() {
   const p = usePalette();
-  useEffect(() => { init(); }, []);
+  useEffect(() => { init(); initPwaListeners(); }, []);
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof document === "undefined") return;

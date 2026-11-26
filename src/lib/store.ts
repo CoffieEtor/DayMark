@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import { clearAllEntities, clearNotificationEntities, deleteEntity, type EntityKind, initStorage, type RawSnapshot, saveEntity, saveSetting } from "../db/persistence";
 import * as Notifications from "expo-notifications";
 import { setHapticsEnabled } from "../haptics";
+import { requestWebNotificationPermission, showWebNotification } from "./pwa";
 
 export type Priority = "low" | "normal" | "high" | "urgent";
 export type WishPriority = "low" | "normal" | "high";
@@ -222,6 +223,9 @@ function checkDueReminders() {
   if (due) {
     alertedIds.add(due.id);
     setState({ dueAlert: due });
+    if (Platform.OS === "web" && state.notify) {
+      void showWebNotification(due.title, due.desc || `Due ${due.date} at ${due.time}`, `rem_${due.id}`);
+    }
   }
 }
 
@@ -260,10 +264,11 @@ async function schedule(r: Reminder): Promise<string | undefined> {
 
 export async function enableNotifications(): Promise<boolean> {
   if (Platform.OS === "web") {
-    state = { ...state, notify: true };
-    await setSetting("notify", "1");
+    const ok = await requestWebNotificationPermission();
+    state = { ...state, notify: ok };
+    await setSetting("notify", ok ? "1" : "0");
     notifyAll();
-    return true;
+    return ok;
   }
   const ok = (await Notifications.requestPermissionsAsync()).granted;
   state = { ...state, notify: ok }; await setSetting("notify", ok ? "1" : "0");
@@ -298,7 +303,16 @@ export async function sendTestNotification(): Promise<boolean> {
   });
   setState({ notifications: [item, ...state.notifications] });
 
-  if (Platform.OS === "web") return true;
+  if (Platform.OS === "web") {
+    const ok = await requestWebNotificationPermission();
+    if (ok) {
+      state = { ...state, notify: true };
+      await setSetting("notify", "1");
+      notifyAll();
+      await showWebNotification("DAYMARKED Test", "Notifications are working on this device.", "daymarked-test");
+    }
+    return true;
+  }
   try {
     const perm = await Notifications.getPermissionsAsync();
     if (!perm.granted) {

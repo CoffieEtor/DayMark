@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, type IconName } from "../../../src/components/ui/icon";
 import { haptic } from "../../../src/haptics";
 import { usePalette, useResponsive } from "../../../src/lib/ui";
+import { getRootTopPaddingPx, isWebStandalone } from "../../../src/lib/pwa";
 import { dismissDueAlert, saveReminder, useStore } from "../../../src/lib/store";
 
 const DRAWER_W = 270;
@@ -62,9 +63,13 @@ export default function TabsLayout() {
     }
   };
 
+  const topBarPad = Platform.OS === "web"
+    ? (isWebStandalone() && getRootTopPaddingPx() === 0 && insets.top === 0 ? 52 : 10)
+    : Math.max(insets.top, 4) + 8;
+
   return (
     <View style={{ flex: 1, backgroundColor: p.bg }}>
-      <View style={[st.topBar, { paddingTop: Math.max(insets.top, 4) + 8, paddingHorizontal: r.pad, maxWidth: r.maxW, width: "100%", alignSelf: "center", backgroundColor: p.bg }]}>
+      <View style={[st.topBar, { paddingTop: topBarPad, paddingHorizontal: r.pad, maxWidth: r.maxW, width: "100%", alignSelf: "center", backgroundColor: p.bg }]}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Pressable
             accessibilityRole="button"
