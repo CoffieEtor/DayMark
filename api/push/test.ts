@@ -1,5 +1,4 @@
-import type { PushSubscription } from "web-push";
-import { deleteKey, getEnv, getJson, isConfigured, readBody, sendWebPush, setCors } from "../_lib/push";
+import { deleteKey, getEnv, getJson, isConfigured, type PushSubscriptionData, readBody, sendWebPush, setCors } from "../_lib/push";
 
 export default async function handler(req: any, res: any) {
   setCors(res);
@@ -14,7 +13,7 @@ export default async function handler(req: any, res: any) {
     if (!subId) return res.status(400).json({ error: "Missing subId" });
 
     const subKey = `push:sub:${subId}`;
-    const subscription = await getJson<PushSubscription>(env, subKey);
+    const subscription = await getJson<PushSubscriptionData>(env, subKey);
     if (!subscription) return res.status(404).json({ error: "No subscription saved for this device" });
 
     const result = await sendWebPush(env, subscription, {

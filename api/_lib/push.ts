@@ -1,4 +1,25 @@
-import webPush, { type PushSubscription } from "web-push";
+export type PushSubscriptionData = {
+  endpoint: string;
+  expirationTime?: number | null;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+};
+
+type WebPushApi = {
+  setVapidDetails: (subject: string, publicKey: string, privateKey: string) => void;
+  sendNotification: (subscription: PushSubscriptionData, payload?: string) => Promise<unknown>;
+};
+
+let cachedWebPush: WebPushApi | null = null;
+async function getWebPush(): Promise<WebPushApi> {
+  if (cachedWebPush) return cachedWebPush;
+  const mod: any = await import("web-push");
+  const resolved: any = mod?.setVapidDetails ? mod : mod?.default ?? mod;
+  cachedWebPush = resolved as WebPushApi;
+  return cachedWebPush;
+}
 
 export type PushEnv = {
   publicKey: string;
@@ -72,9 +93,10 @@ export async function cancelQstashMessage(env: PushEnv, messageId: string | null
 
 export async function sendWebPush(
   env: PushEnv,
-  subscription: PushSubscription,
+  subscription: PushSubscriptionData,
   payload: { title: string; body: string; tag?: string; url?: string },
 ): Promise<{ status: "sent" | "expired" }> {
+  const webPush = await getWebPush();
   webPush.setVapidDetails(env.subject, env.publicKey, env.privateKey);
   try {
     await webPush.sendNotification(subscription, JSON.stringify(payload));

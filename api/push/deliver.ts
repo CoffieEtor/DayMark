@@ -1,5 +1,4 @@
-import type { PushSubscription } from "web-push";
-import { deleteKey, getEnv, getJson, isConfigured, readBody, sendWebPush, setCors } from "../_lib/push";
+import { deleteKey, getEnv, getJson, isConfigured, type PushSubscriptionData, readBody, sendWebPush, setCors } from "../_lib/push";
 
 type StoredReminder = {
   title: string;
@@ -40,7 +39,7 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ ok: true, skipped: true });
     }
 
-    const subscription = await getJson<PushSubscription>(env, subKey);
+    const subscription = await getJson<PushSubscriptionData>(env, subKey);
     if (!subscription) {
       await deleteKey(env, remKey);
       await deleteKey(env, qmsgKey);
