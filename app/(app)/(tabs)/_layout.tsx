@@ -4,7 +4,7 @@ import { router, Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, type IconName } from "../../../src/components/ui/icon";
 import { haptic } from "../../../src/haptics";
-import { usePalette } from "../../../src/lib/ui";
+import { usePalette, useResponsive } from "../../../src/lib/ui";
 import { dismissDueAlert, saveReminder, useStore } from "../../../src/lib/store";
 
 const DRAWER_W = 270;
@@ -26,6 +26,7 @@ export default function TabsLayout() {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const p = usePalette();
+  const r = useResponsive();
   const { dueAlert, notifications, name, addressAs } = useStore();
   const slide = useRef(new Animated.Value(-DRAWER_W)).current;
 
@@ -59,7 +60,7 @@ export default function TabsLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: p.bg }}>
-      <View style={[st.topBar, { paddingTop: insets.top + 10, backgroundColor: p.bg }]}>
+      <View style={[st.topBar, { paddingTop: Math.max(insets.top, 4) + 8, paddingHorizontal: r.pad, maxWidth: r.maxW, width: "100%", alignSelf: "center", backgroundColor: p.bg }]}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Pressable
             accessibilityRole="button"
@@ -86,7 +87,7 @@ export default function TabsLayout() {
       </View>
 
       {dueAlert ? (
-        <View style={[st.alertBanner, { backgroundColor: p.s1, borderColor: p.ac }]}>
+        <View style={[st.alertBanner, { backgroundColor: p.s1, borderColor: p.ac, marginHorizontal: r.pad, maxWidth: r.maxW - r.pad * 2, width: "100%", alignSelf: "center" }]}>
           <View style={{ flex: 1 }}>
             <Text style={[st.alertTitle, { color: p.tx }]}>Reminder: {dueAlert.title}</Text>
             <Text style={{ color: p.mu, fontSize: 12 }}>{dueAlert.desc || `${dueAlert.date} at ${dueAlert.time}`}</Text>
@@ -106,7 +107,14 @@ export default function TabsLayout() {
           animation: "shift",
           tabBarActiveTintColor: p.ac,
           tabBarInactiveTintColor: p.mu,
-          tabBarStyle: { backgroundColor: p.bg, borderTopColor: p.line },
+          tabBarStyle: {
+            backgroundColor: p.bg,
+            borderTopColor: p.line,
+            height: 56 + Math.max(insets.bottom, 6),
+            paddingBottom: Math.max(insets.bottom, 6),
+            paddingTop: 6,
+          },
+          tabBarItemStyle: { maxWidth: 180 },
         }}
       >
         {TAB_ITEMS.map(([name, title, icon]) => (
@@ -130,11 +138,11 @@ export default function TabsLayout() {
               style={[
                 st.drawer,
                 {
-                  width: DRAWER_W,
+                  width: Math.min(DRAWER_W, Math.round(r.width * 0.78)),
                   backgroundColor: p.bg,
                   borderRightColor: p.line,
-                  paddingTop: insets.top + 8,
-                  paddingBottom: insets.bottom + 20,
+                  paddingTop: Math.max(insets.top, 12) + 8,
+                  paddingBottom: Math.max(insets.bottom, 20),
                   transform: [{ translateX: slide }],
                 },
               ]}

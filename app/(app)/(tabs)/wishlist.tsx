@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Linking, Text, View } from "react-native";
-import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, Input, Muted, Row, Screen, Seg, s, usePalette } from "../../../src/lib/ui";
+import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, Input, Muted, Row, Screen, Seg, s, usePalette, useResponsive } from "../../../src/lib/ui";
 import { delWish, money, saveWish, uid, useStore, Wish, WishPriority } from "../../../src/lib/store";
 import { haptic } from "../../../src/haptics";
 
@@ -26,6 +26,7 @@ const FIELDS: Field[] = [
 export default function Wishlist() {
   const { wishlist, currency } = useStore();
   const p = usePalette();
+  const r = useResponsive();
   const [tab, setTab] = useState<"all" | "active" | "bought">("active");
   const [cat, setCat] = useState<string>("all");
   const [sort, setSort] = useState<"priority" | "price_asc" | "price_desc" | "alpha">("priority");
@@ -95,8 +96,8 @@ export default function Wishlist() {
     <Screen title="Wishlist" sub={`${money(estCost, currency)} across ${act.length} unpurchased`}>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
         {kpis.map(([val, lbl]) => (
-          <View key={lbl} style={[s.card, { backgroundColor: p.s1, borderColor: p.line, width: "48%", marginBottom: 0 }]}>
-            <Text style={{ color: p.tx, fontSize: 20, fontWeight: "600" }}>{val}</Text>
+          <View key={lbl} style={[s.card, { backgroundColor: p.s1, borderColor: p.line, flexBasis: "47%", flexGrow: 1, marginBottom: 0 }]}>
+            <Text style={{ color: p.tx, fontSize: r.compact ? 17 : 20, fontWeight: "600" }} numberOfLines={1} adjustsFontSizeToFit>{val}</Text>
             <Muted t={lbl} />
           </View>
         ))}

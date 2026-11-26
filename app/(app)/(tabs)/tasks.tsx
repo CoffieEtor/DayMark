@@ -130,7 +130,7 @@ export default function Tasks() {
             <View style={{ marginTop: 12 }}>
               <Text style={[s.label, { color: p.mu }]}>Checklist subtasks</Text>
               <View style={{ flexDirection: "row", gap: 8 }}>
-                <Input style={{ flex: 1 }} placeholder="Add a subtask" value={newSub} onChangeText={setNewSub} onSubmitEditing={addDraftSub} />
+                <Input style={{ flex: 1, minWidth: 0 }} placeholder="Add a subtask" value={newSub} onChangeText={setNewSub} onSubmitEditing={addDraftSub} />
                 <Btn label="Add" kind="ghost" onPress={addDraftSub} />
               </View>
               {draftSubs.map((sub) => (

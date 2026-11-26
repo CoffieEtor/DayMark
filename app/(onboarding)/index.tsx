@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Input, usePalette } from "../../src/lib/ui";
+import { Input, usePalette, useResponsive } from "../../src/lib/ui";
 import { completeOnboarding, setAddressAs, setName, useStore } from "../../src/lib/store";
 import { haptic } from "../../src/haptics";
 
@@ -11,6 +11,7 @@ const STEPS = 5;
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const p = usePalette();
+  const r = useResponsive();
   const store = useStore();
   const [step, setStep] = useState(0);
   const [nm, setNm] = useState(store.name);
@@ -33,7 +34,8 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <View style={[st.container, { backgroundColor: p.bg, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }]}>
+    <View style={{ flex: 1, backgroundColor: p.bg }}>
+      <View style={[st.container, { paddingHorizontal: r.pad, maxWidth: 560, width: "100%", alignSelf: "center", paddingTop: Math.max(insets.top, 12) + 10, paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
       <View style={st.topRow}>
         <View style={st.dashes}>
           {Array.from({ length: STEPS }).map((_, i) => (
@@ -148,6 +150,7 @@ export default function OnboardingScreen() {
         >
           <Text style={[st.pillMainText, { color: p.isDark ? "#101114" : "#FFFFFF" }]}>{step === STEPS - 1 ? "Enter App" : "Next"}</Text>
         </Pressable>
+      </View>
       </View>
     </View>
   );

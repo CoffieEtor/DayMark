@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
-import { Btn, Card, H2, Muted, Screen, Empty, s, usePalette } from "../../../src/lib/ui";
+import { Btn, Card, H2, Muted, Screen, Empty, s, usePalette, useResponsive } from "../../../src/lib/ui";
 import { enableNotifications, money, PRI, reminderDate, today, useStore } from "../../../src/lib/store";
 import { haptic } from "../../../src/haptics";
 
 export default function Dashboard() {
   const st = useStore();
   const p = usePalette();
+  const r = useResponsive();
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const td = today();
@@ -66,10 +67,10 @@ export default function Dashboard() {
             key={c.title}
             accessibilityRole="button"
             onPress={() => { haptic.selection(); router.navigate(c.href as any); }}
-            style={[s.card, { backgroundColor: p.s1, borderColor: p.line, width: "48%", marginBottom: 0 }]}
+            style={[s.card, { backgroundColor: p.s1, borderColor: p.line, flexBasis: "47%", flexGrow: 1, marginBottom: 0 }]}
           >
-            <Text style={{ color: p.mu, fontSize: 12, fontWeight: "600" }}>{c.title}</Text>
-            <Text style={{ color: c.warn ? p.bad : p.tx, fontSize: 28, fontWeight: "700", marginVertical: 2 }}>{c.count}</Text>
+            <Text style={{ color: p.mu, fontSize: 12, fontWeight: "600" }} numberOfLines={1}>{c.title}</Text>
+            <Text style={{ color: c.warn ? p.bad : p.tx, fontSize: r.compact ? 24 : 28, fontWeight: "700", marginVertical: 2 }}>{c.count}</Text>
             <Muted t={c.sub} bad={c.warn} />
           </Pressable>
         ))}
