@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, H2, Input, Muted, Row, Screen, Seg, usePalette } from "../../../src/lib/ui";
-import { delReminder, isValidDate, isValidTime, Reminder, reminderDate, saveReminder, snoozeReminder, today, tomorrow, uid, useStore } from "../../../src/lib/store";
+import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, H2, Input, Muted, PriorityBadge, Row, Screen, Seg, usePalette } from "../../../src/lib/ui";
+import { delReminder, isValidDate, isValidTime, normalizePriority, PRI, PRIORITY_LABEL, PRIORITY_OPTIONS, Reminder, reminderDate, saveReminder, snoozeReminder, today, tomorrow, uid, useStore } from "../../../src/lib/store";
 import { haptic } from "../../../src/haptics";
 
 function getFields(): Field[] {
   return [
     { k: "title", label: "Title", required: true },
     { k: "desc", label: "Details", multiline: true },
+    { k: "priority", label: "Priority", options: PRIORITY_OPTIONS, optionLabels: PRIORITY_LABEL },
     {
       k: "date",
-      label: "Date (YYYY-MM-DD)",
+      label: "Date",
+      kind: "date",
       required: true,
       presets: [
         { label: "Today", value: today() },
@@ -19,7 +21,8 @@ function getFields(): Field[] {
     },
     {
       k: "time",
-      label: "Time (HH:MM, 24-hour)",
+      label: "Time",
+      kind: "time",
       required: true,
       presets: [
         { label: "Morning 9:00 AM", value: "09:00" },
@@ -35,6 +38,7 @@ export default function Reminders() {
   const { reminders, notify } = useStore();
   const p = usePalette();
   const [f, setF] = useState<"all" | "today" | "tomorrow" | "upcoming" | "overdue" | "completed">("all");
+  const [sort, setSort] = useState<"time" | "priority">("time");
   const [q, setQ] = useState("");
   const [edit, setEdit] = useState<Reminder | "new" | null>(null);
 
@@ -42,8 +46,12 @@ export default function Reminders() {
   const td = today();
   const tm = tomorrow();
 
-  const matches = (r: Reminder) => (r.title + r.desc).toLowerCase().includes(q.toLowerCase());
-  const act = reminders.filter((r) => !r.done && matches(r)).sort((a, b) => +reminderDate(a) - +reminderDate(b));
+  const matches = (r: Reminder) => (r.title + r.desc + r.priority).toLowerCase().includes(q.toLowerCase());
+  const byOrder = (a: Reminder, b: Reminder) =>
+    sort === "priority"
+      ? PRI[b.priority] - PRI[a.priority] || +reminderDate(a) - +reminderDate(b)
+      : +reminderDate(a) - +reminderDate(b) || PRI[b.priority] - PRI[a.priority];
+  const act = reminders.filter((r) => !r.done && matches(r)).sort(byOrder);
   const overdue = act.filter((r) => reminderDate(r) < now);
   const dueToday = act.filter((r) => reminderDate(r) >= now && r.date === td);
   const dueTomorrow = act.filter((r) => reminderDate(r) >= now && r.date === tm);
@@ -52,12 +60,16 @@ export default function Reminders() {
 
   const card = (r: Reminder) => {
     const over = !r.done && reminderDate(r) < now;
+    const accent = over || (!r.done && r.priority === "high") ? p.bad : !r.done && r.priority === "medium" ? p.ac : undefined;
     return (
-      <Card key={r.id} done={r.done} accent={over ? p.bad : undefined}>
+      <Card key={r.id} done={r.done} accent={accent}>
         <View style={{ flexDirection: "row", gap: 12 }}>
           <Check on={r.done} label={`${r.done ? "Reopen" : "Complete"} ${r.title}`} onPress={() => saveReminder({ ...r, done: !r.done })} />
           <View style={{ flex: 1 }}>
-            <Text style={[{ color: p.tx, fontWeight: "500" }, r.done && { textDecorationLine: "line-through" }]}>{r.title}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <Text style={[{ color: p.tx, fontWeight: "500" }, r.done && { textDecorationLine: "line-through" }]}>{r.title}</Text>
+              <PriorityBadge priority={r.priority} />
+            </View>
             {r.desc ? <Muted t={r.desc} /> : null}
             <Muted t={(over ? "Overdue · " : "") + `${r.date} at ${r.time}`} bad={over} />
             {!r.done ? (
@@ -91,6 +103,7 @@ export default function Reminders() {
       <Row><Btn label="Add reminder" onPress={() => setEdit("new")} /></Row>
       <Seg opts={[["all", "All"], ["today", "Today"], ["tomorrow", "Tomorrow"], ["upcoming", "Upcoming"], ["overdue", "Overdue"], ["completed", "Completed"]]} value={f} on={setF} />
       <Input placeholder="Search reminders" value={q} onChangeText={setQ} />
+      <Seg opts={[["time", "Schedule"], ["priority", "Priority"]]} value={sort} on={setSort} />
 
       {f === "all" ? (
         <>
@@ -112,14 +125,23 @@ export default function Reminders() {
         <FormSheet
           title={edit === "new" ? "New reminder" : "Edit reminder"}
           fields={getFields()}
-          initial={edit === "new" ? { date: td, time: "09:00" } : { ...edit } as any}
+          initial={edit === "new" ? { date: td, time: "09:00", priority: "medium" } : { ...edit } as any}
           onClose={() => setEdit(null)}
           onSave={(v) => {
             const date = v.date.trim();
             const time = v.time.trim();
-            if (!isValidDate(date)) return "Enter a valid date (YYYY-MM-DD).";
-            if (!isValidTime(time)) return "Enter a valid 24-hour time (HH:MM).";
-            void saveReminder({ id: edit === "new" ? uid() : edit.id, done: edit === "new" ? false : edit.done, nid: edit === "new" ? null : edit.nid, title: v.title.trim(), desc: v.desc ?? "", date, time });
+            if (!isValidDate(date)) return "Select a valid date.";
+            if (!isValidTime(time)) return "Select a valid time.";
+            void saveReminder({
+              id: edit === "new" ? uid() : edit.id,
+              done: edit === "new" ? false : edit.done,
+              nid: edit === "new" ? null : edit.nid,
+              title: v.title.trim(),
+              desc: v.desc ?? "",
+              priority: normalizePriority(v.priority),
+              date,
+              time,
+            });
             setEdit(null);
           }}
         />

@@ -3,7 +3,7 @@ import { Alert, Animated, Easing, KeyboardAvoidingView, Modal, Platform, Pressab
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "../components/ui/icon";
 import { haptic } from "../haptics";
-import { ACCENTS, useStore } from "./store";
+import { ACCENTS, isValidDate, isValidTime, Priority, PRIORITY_LABEL, useStore } from "./store";
 
 export const DARK_C = { bg: "#101114", s1: "#181A1F", s2: "#22252C", line: "#2D313A", tx: "#ECE8E1", mu: "#9699A3", ac: "#D6B56D", bad: "#E07A6D" };
 export const LIGHT_C = { bg: "#F7F6F2", s1: "#FFFFFF", s2: "#EFECE4", line: "#DFDCD2", tx: "#16171B", mu: "#686B75", ac: "#B68D38", bad: "#C94A3B" };
@@ -194,11 +194,137 @@ export const Input = (props: React.ComponentProps<typeof TextInput>) => {
   return <TextInput placeholderTextColor={p.mu} {...props} style={[s.input, { backgroundColor: p.s2, borderColor: p.line, color: p.tx }, props.style]} />;
 };
 
+export function PriorityBadge({ priority }: { priority: Priority }) {
+  const p = usePalette();
+  const color = priority === "high" ? p.bad : priority === "medium" ? p.ac : p.mu;
+  const bg = priority === "high" ? "rgba(224,122,109,0.14)" : priority === "medium" ? "rgba(214,181,109,0.14)" : p.s2;
+  return (
+    <View style={{ borderWidth: 1, borderColor: priority === "low" ? p.line : color, backgroundColor: bg, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, alignSelf: "flex-start" }}>
+      <Text style={{ color, fontSize: 11, fontWeight: "700" }}>{PRIORITY_LABEL[priority]}</Text>
+    </View>
+  );
+}
+
+function formatPickerDate(value: string): string {
+  if (!isValidDate(value)) return "Tap to select date";
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatPickerTime(value: string): string {
+  if (!isValidTime(value)) return "Tap to select time";
+  const [h, m] = value.split(":").map(Number);
+  return new Date(2000, 0, 1, h, m).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+export function PickerInput({
+  mode,
+  value,
+  required,
+  placeholder,
+  onChange,
+}: {
+  mode: "date" | "time";
+  value: string;
+  required?: boolean;
+  placeholder?: string;
+  onChange: (val: string) => void;
+}) {
+  const p = usePalette();
+  if (Platform.OS !== "web") {
+    return (
+      <Input
+        value={value}
+        placeholder={placeholder ?? (mode === "date" ? "YYYY-MM-DD" : "HH:MM")}
+        onChangeText={onChange}
+      />
+    );
+  }
+  const hasVal = mode === "date" ? isValidDate(value) : isValidTime(value);
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View
+        style={{
+          flex: 1,
+          position: "relative",
+          minHeight: 46,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: hasVal ? p.ac : p.line,
+          backgroundColor: p.s2,
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 12,
+          gap: 10,
+          overflow: "hidden",
+        }}
+      >
+        <Icon name={mode === "date" ? "calendar" : "clock"} size={18} color={hasVal ? p.ac : p.mu} />
+        <Text style={{ color: hasVal ? p.tx : p.mu, fontSize: 16, flex: 1 }} numberOfLines={1}>
+          {mode === "date" ? formatPickerDate(value) : formatPickerTime(value)}
+        </Text>
+        <Text style={{ color: p.ac, fontSize: 12, fontWeight: "600" }}>{hasVal ? "Change" : "Pick"}</Text>
+        {React.createElement("input", {
+          type: mode,
+          value: value || "",
+          onChange: (e: any) => onChange(e?.target?.value ?? ""),
+          onClick: (e: any) => {
+            try {
+              e?.currentTarget?.showPicker?.();
+            } catch {
+              // Safari handles native tap directly without showPicker
+            }
+          },
+          "aria-label": mode === "date" ? "Choose date" : "Choose time",
+          style: {
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            opacity: 0,
+            cursor: "pointer",
+            fontSize: 16,
+            border: "none",
+            backgroundColor: "transparent",
+            colorScheme: p.isDark ? "dark" : "light",
+            zIndex: 2,
+          },
+        })}
+      </View>
+      {!required && value ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Clear ${mode}`}
+          onPress={() => { haptic.selection(); onChange(""); }}
+          style={{
+            minHeight: 46,
+            paddingHorizontal: 12,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: p.line,
+            backgroundColor: p.s1,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Icon name="x" size={16} color={p.mu} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 export type Field = {
   k: string;
   label: string;
   multiline?: boolean;
   numeric?: boolean;
+  kind?: "text" | "date" | "time";
   placeholder?: string;
   required?: boolean;
   options?: string[];
@@ -261,14 +387,24 @@ export function FormSheet({
                   <Seg opts={f.options.map((o) => [o, f.optionLabels?.[o] ?? o] as [string, string])} value={v[f.k]} on={(x) => setV({ ...v, [f.k]: x })} />
                 ) : (
                   <>
-                    <Input
-                      value={v[f.k] ?? ""}
-                      multiline={f.multiline}
-                      keyboardType={f.numeric ? "decimal-pad" : "default"}
-                      placeholder={f.placeholder}
-                      autoCapitalize={f.k === "url" ? "none" : "sentences"}
-                      onChangeText={(x) => setV({ ...v, [f.k]: x })}
-                    />
+                    {f.kind === "date" || f.kind === "time" ? (
+                      <PickerInput
+                        mode={f.kind}
+                        value={v[f.k] ?? ""}
+                        required={f.required}
+                        placeholder={f.placeholder}
+                        onChange={(x) => setV({ ...v, [f.k]: x })}
+                      />
+                    ) : (
+                      <Input
+                        value={v[f.k] ?? ""}
+                        multiline={f.multiline}
+                        keyboardType={f.numeric ? "decimal-pad" : "default"}
+                        placeholder={f.placeholder}
+                        autoCapitalize={f.k === "url" ? "none" : "sentences"}
+                        onChangeText={(x) => setV({ ...v, [f.k]: x })}
+                      />
+                    )}
                     {f.presets?.length ? (
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
                         {f.presets.map((pr) => {

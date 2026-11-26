@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Linking, Text, View } from "react-native";
-import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, Input, Muted, Row, Screen, Seg, s, usePalette, useResponsive } from "../../../src/lib/ui";
-import { delWish, money, saveWish, uid, useStore, Wish, WishPriority } from "../../../src/lib/store";
+import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, Input, Muted, PriorityBadge, Row, Screen, Seg, s, usePalette, useResponsive } from "../../../src/lib/ui";
+import { delWish, money, normalizePriority, PRIORITY_OPTIONS, saveWish, uid, useStore, Wish, WishPriority } from "../../../src/lib/store";
 import { haptic } from "../../../src/haptics";
 
 const CATEGORIES = ["Tech", "Workspace", "Home", "Books", "Clothing", "Travel"];
-const PRI_LABEL: Record<WishPriority, string> = { low: "Low Need", normal: "Medium Priority", high: "High / Top Dream" };
-const PRI_SCORE: Record<WishPriority, number> = { low: 1, normal: 2, high: 4 };
+const PRI_LABEL: Record<WishPriority, string> = { high: "High Priority", medium: "Medium Priority", low: "Low Priority" };
+const PRI_SCORE: Record<WishPriority, number> = { low: 1, medium: 2, high: 4 };
 
 const FIELDS: Field[] = [
   { k: "name", label: "Item name", required: true },
   { k: "price", label: "Estimated price", numeric: true },
-  { k: "priority", label: "Priority", options: ["low", "normal", "high"], optionLabels: PRI_LABEL },
+  { k: "priority", label: "Priority", options: PRIORITY_OPTIONS, optionLabels: PRI_LABEL },
   {
     k: "category",
     label: "Category",
@@ -138,13 +138,16 @@ export default function Wishlist() {
 
       <View style={{ marginTop: 10 }}>
         {list.length ? list.map((w) => (
-          <Card key={w.id} done={w.purchased} accent={!w.purchased && w.priority === "high" ? p.ac : undefined}>
+          <Card key={w.id} done={w.purchased} accent={!w.purchased && w.priority === "high" ? p.bad : !w.purchased && w.priority === "medium" ? p.ac : undefined}>
             <View style={{ flexDirection: "row", gap: 12 }}>
               <Check on={w.purchased} label={`${w.purchased ? "Restore" : "Mark purchased"} ${w.name}`} onPress={() => saveWish({ ...w, purchased: !w.purchased })} />
               <View style={{ flex: 1 }}>
-                <Text style={{ color: p.tx, fontWeight: "500" }}>{w.name}</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <Text style={{ color: p.tx, fontWeight: "500" }}>{w.name}</Text>
+                  <PriorityBadge priority={w.priority} />
+                </View>
                 {w.desc ? <Muted t={w.desc} /> : null}
-                <Muted t={[money(w.price, currency), PRI_LABEL[w.priority], w.category].filter(Boolean).join(" · ")} />
+                <Muted t={[money(w.price, currency), w.category].filter(Boolean).join(" · ")} />
                 {w.notes ? <Muted t={`Note: ${w.notes}`} /> : null}
                 {w.url ? <Text style={{ color: p.ac, fontSize: 13 }} onPress={() => Linking.openURL(w.url).catch(() => {})}>Open link</Text> : null}
               </View>
@@ -158,7 +161,7 @@ export default function Wishlist() {
         <FormSheet
           title={edit === "new" ? "New item" : "Edit item"}
           fields={FIELDS}
-          initial={edit === "new" ? { priority: "normal" } : { ...edit, price: String(edit.price || "") } as any}
+          initial={edit === "new" ? { priority: "medium" } : { ...edit, price: String(edit.price || "") } as any}
           onClose={() => setEdit(null)}
           onSave={(v) => {
             const rawPrice = v.price?.trim() ?? "";
@@ -173,7 +176,7 @@ export default function Wishlist() {
               price,
               url,
               category: v.category?.trim() ?? "",
-              priority: (v.priority as WishPriority) ?? "normal",
+              priority: normalizePriority(v.priority),
               notes: v.notes?.trim() ?? "",
             });
             setEdit(null);

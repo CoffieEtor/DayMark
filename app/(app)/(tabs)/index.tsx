@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
-import { Btn, Card, H2, Muted, Screen, Empty, s, usePalette, useResponsive } from "../../../src/lib/ui";
+import { Btn, Card, H2, Muted, PriorityBadge, Screen, Empty, s, usePalette, useResponsive } from "../../../src/lib/ui";
 import { enableNotifications, money, PRI, reminderDate, today, useStore } from "../../../src/lib/store";
 import { haptic } from "../../../src/haptics";
 
@@ -17,7 +17,7 @@ export default function Dashboard() {
   const todayDone = todayTasks.filter((t) => t.done).length;
   const pct = todayTasks.length ? Math.round((todayDone / todayTasks.length) * 100) : 0;
   const overdue = open.filter((t) => !!t.due && t.due < td);
-  const blockers = [...open].filter((t) => t.priority === "urgent" || t.priority === "high").sort((a, b) => PRI[b.priority] - PRI[a.priority]).slice(0, 3);
+  const blockers = [...open].filter((t) => t.priority === "high").sort((a, b) => PRI[b.priority] - PRI[a.priority]).slice(0, 3);
   const actReminders = st.reminders.filter((r) => !r.done).sort((a, b) => +reminderDate(a) - +reminderDate(b));
   const wl = st.wishlist.filter((w) => !w.purchased);
   const bought = st.wishlist.filter((w) => w.purchased);
@@ -78,16 +78,22 @@ export default function Dashboard() {
 
       <H2 t="Priority blockers" />
       {blockers.length ? blockers.map((t) => (
-        <Card key={t.id} accent={t.priority === "urgent" ? p.bad : p.ac}>
-          <Text style={{ color: p.tx }}>{t.title}</Text>
-          <Muted t={[t.priority, t.due && `due ${t.due}`, t.dueTime, t.category].filter(Boolean).join(" · ")} bad={!!t.due && t.due < td} />
+        <Card key={t.id} accent={p.bad}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <Text style={{ color: p.tx }}>{t.title}</Text>
+            <PriorityBadge priority={t.priority} />
+          </View>
+          <Muted t={[t.due && `due ${t.due}`, t.dueTime, t.category].filter(Boolean).join(" · ")} bad={!!t.due && t.due < td} />
         </Card>
-      )) : <Empty t="No high-priority blockers" sub="Urgent and high-priority tasks appear here." />}
+      )) : <Empty t="No high-priority blockers" sub="High-priority tasks appear here." />}
 
       <H2 t="Upcoming reminders" />
       {actReminders.slice(0, 3).length ? actReminders.slice(0, 3).map((r) => (
-        <Card key={r.id}>
-          <Text style={{ color: p.tx }}>{r.title}</Text>
+        <Card key={r.id} accent={reminderDate(r) < new Date() || r.priority === "high" ? p.bad : r.priority === "medium" ? p.ac : undefined}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <Text style={{ color: p.tx }}>{r.title}</Text>
+            <PriorityBadge priority={r.priority} />
+          </View>
           <Muted t={`${r.date} at ${r.time}`} bad={reminderDate(r) < new Date()} />
         </Card>
       )) : <Empty t="No reminders" sub="Add one in the Reminders section." />}

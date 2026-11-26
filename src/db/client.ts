@@ -23,6 +23,7 @@ const MIGRATIONS = [
   `ALTER TABLE tasks ADD COLUMN subtasks TEXT NOT NULL DEFAULT '[]';
    ALTER TABLE wishlist ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal';`,
   `CREATE TABLE IF NOT EXISTS notifications (id TEXT PRIMARY KEY NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL DEFAULT '', date TEXT NOT NULL DEFAULT '', time TEXT NOT NULL DEFAULT '', kind TEXT NOT NULL DEFAULT 'system', ref_id TEXT, read INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL);`,
+  `ALTER TABLE reminders ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium';`,
 ];
 export async function migrate() {
   if (!expoDb) {

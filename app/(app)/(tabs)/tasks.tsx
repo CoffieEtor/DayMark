@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, Input, Muted, Row, Screen, Seg, s, usePalette } from "../../../src/lib/ui";
-import { addDays, delTask, isValidDate, isValidTime, PRI, saveTask, Subtask, Task, today, tomorrow, uid, useStore } from "../../../src/lib/store";
+import { Btn, Card, CardMenu, Check, Empty, Field, FormSheet, Input, Muted, PriorityBadge, Row, Screen, Seg, s, usePalette } from "../../../src/lib/ui";
+import { addDays, delTask, isValidDate, isValidTime, normalizePriority, PRI, PRIORITY_LABEL, PRIORITY_OPTIONS, saveTask, Subtask, Task, today, tomorrow, uid, useStore } from "../../../src/lib/store";
 import { haptic } from "../../../src/haptics";
 
 function getFields(): Field[] {
   return [
     { k: "title", label: "Title", required: true },
     { k: "notes", label: "Description", multiline: true },
-    { k: "priority", label: "Priority", options: ["low", "normal", "high", "urgent"], optionLabels: { low: "Low", normal: "Normal", high: "High", urgent: "Urgent" } },
+    { k: "priority", label: "Priority", options: PRIORITY_OPTIONS, optionLabels: PRIORITY_LABEL },
     {
       k: "category",
       label: "Category",
@@ -17,7 +17,8 @@ function getFields(): Field[] {
     },
     {
       k: "due",
-      label: "Due date (YYYY-MM-DD)",
+      label: "Due date",
+      kind: "date",
       placeholder: today(),
       presets: [
         { label: "Today", value: today() },
@@ -26,7 +27,17 @@ function getFields(): Field[] {
         { label: "+1 Week", value: addDays(7) },
       ],
     },
-    { k: "dueTime", label: "Due time (HH:MM, 24-hour)", placeholder: "14:30" },
+    {
+      k: "dueTime",
+      label: "Due time",
+      kind: "time",
+      placeholder: "14:30",
+      presets: [
+        { label: "Morning 9:00 AM", value: "09:00" },
+        { label: "Afternoon 1:00 PM", value: "13:00" },
+        { label: "Evening 6:00 PM", value: "18:00" },
+      ],
+    },
   ];
 }
 
@@ -77,15 +88,17 @@ export default function Tasks() {
           const subs = t.subtasks ?? [];
           const subsDone = subs.filter((x) => x.done).length;
           return (
-            <Card key={t.id} done={t.done} accent={over || (!t.done && t.priority === "urgent") ? p.bad : !t.done && t.priority === "high" ? p.ac : undefined}>
+            <Card key={t.id} done={t.done} accent={over || (!t.done && t.priority === "high") ? p.bad : !t.done && t.priority === "medium" ? p.ac : undefined}>
               <View style={{ flexDirection: "row", gap: 12 }}>
                 <Check on={t.done} label={`${t.done ? "Reopen" : "Complete"} ${t.title}`} onPress={() => saveTask({ ...t, done: !t.done })} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[{ color: p.tx, fontWeight: "500" }, t.done && { textDecorationLine: "line-through" }]}>{t.title}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <Text style={[{ color: p.tx, fontWeight: "500" }, t.done && { textDecorationLine: "line-through" }]}>{t.title}</Text>
+                    <PriorityBadge priority={t.priority} />
+                  </View>
                   {t.notes ? <Muted t={t.notes} /> : null}
                   <Muted
                     t={[
-                      t.priority,
                       t.category,
                       t.due && (over ? "Overdue · " : "") + t.due + (t.dueTime ? ` ${t.dueTime}` : ""),
                       subs.length ? `${subsDone}/${subs.length} subtasks` : "",
@@ -124,7 +137,7 @@ export default function Tasks() {
         <FormSheet
           title={edit === "new" ? "New task" : "Edit task"}
           fields={getFields()}
-          initial={edit === "new" ? { priority: "normal" } : { ...edit, subtasks: undefined } as any}
+          initial={edit === "new" ? { priority: "medium" } : { ...edit, subtasks: undefined } as any}
           onClose={() => setEdit(null)}
           extra={(
             <View style={{ marginTop: 12 }}>
@@ -148,15 +161,15 @@ export default function Tasks() {
           onSave={(v) => {
             const due = v.due?.trim() ?? "";
             const dueTime = v.dueTime?.trim() ?? "";
-            if (due && !isValidDate(due)) return "Enter a valid due date (YYYY-MM-DD).";
-            if (dueTime && !isValidTime(dueTime)) return "Enter a valid 24-hour time (HH:MM).";
+            if (due && !isValidDate(due)) return "Select a valid due date.";
+            if (dueTime && !isValidTime(dueTime)) return "Select a valid due time.";
             void saveTask({
               id: edit === "new" ? uid() : edit.id,
               done: edit === "new" ? false : edit.done,
               createdAt: edit === "new" ? Date.now() : (edit.createdAt || Date.now()),
               title: v.title.trim(),
               notes: v.notes ?? "",
-              priority: (v.priority as Task["priority"]) ?? "normal",
+              priority: normalizePriority(v.priority),
               category: v.category?.trim() ?? "",
               subtasks: draftSubs,
               due,

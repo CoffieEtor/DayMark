@@ -13,8 +13,15 @@ import {
   showWebNotification,
 } from "./pwa";
 
-export type Priority = "low" | "normal" | "high" | "urgent";
-export type WishPriority = "low" | "normal" | "high";
+export type Priority = "low" | "medium" | "high";
+export type WishPriority = Priority;
+export const PRIORITY_OPTIONS: Priority[] = ["high", "medium", "low"];
+export const PRIORITY_LABEL: Record<Priority, string> = { high: "High", medium: "Medium", low: "Low" };
+export function normalizePriority(raw: unknown): Priority {
+  if (raw === "high" || raw === "urgent") return "high";
+  if (raw === "low") return "low";
+  return "medium";
+}
 export type CurrencyCode = "GHS" | "USD" | "EUR" | "GBP" | "NGN" | "KES";
 export type AccentKey = "gold" | "emerald" | "azure" | "violet" | "amber";
 export type ThemePref = "dark" | "light" | "system";
@@ -32,7 +39,7 @@ export type Task = {
   createdAt: number;
   done: boolean;
 };
-export type Reminder = { id: string; title: string; desc: string; date: string; time: string; done: boolean; nid?: string | null };
+export type Reminder = { id: string; title: string; desc: string; date: string; time: string; priority: Priority; done: boolean; nid?: string | null };
 export type Wish = {
   id: string;
   name: string;
@@ -157,17 +164,18 @@ function hydrateSnapshot(snap: RawSnapshot) {
   const hapticsEnabled = kv.haptics !== "0";
   setHapticsEnabled(hapticsEnabled);
   clearedNotifs = new Set(parseJsonArray<string>(kv.cleared_notifs));
-  const tasks: Task[] = snap.tasks.map((t) => ({ ...t, priority: t.priority as Priority, subtasks: parseJsonArray<Subtask>(t.subtasks) }));
+  const tasks: Task[] = snap.tasks.map((t) => ({ ...t, priority: normalizePriority(t.priority), subtasks: parseJsonArray<Subtask>(t.subtasks) }));
+  const reminders: Reminder[] = snap.reminders.map((r) => ({ ...r, priority: normalizePriority(r.priority) }));
   const wishlist: Wish[] = snap.wishlist.map((w) => ({
     ...w,
-    priority: (["low", "normal", "high"].includes(w.priority) ? w.priority : "normal") as WishPriority,
+    priority: normalizePriority(w.priority),
   }));
   const notifications: AppNotification[] = snap.notifications
     .map((n) => ({ ...n, kind: (["reminder", "task", "system"].includes(n.kind) ? n.kind : "system") as AppNotification["kind"] }))
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return {
     tasks,
-    reminders: snap.reminders as Reminder[],
+    reminders,
     wishlist,
     notifications,
     name: kv.name ?? "",
@@ -548,7 +556,7 @@ export async function importJson(text: string): Promise<boolean> {
         id: String(raw.id || uid()),
         title: String(raw.title || "Untitled"),
         notes: String(raw.notes ?? ""),
-        priority: (["low", "normal", "high", "urgent"].includes(raw.priority) ? raw.priority : "normal") as Priority,
+        priority: normalizePriority(raw.priority),
         due: String(raw.due ?? ""),
         dueTime: String(raw.dueTime ?? ""),
         category: String(raw.category ?? ""),
@@ -567,7 +575,7 @@ export async function importJson(text: string): Promise<boolean> {
         price: Number(raw.price) || 0,
         url: String(raw.url ?? ""),
         category: String(raw.category ?? ""),
-        priority: (["low", "normal", "high"].includes(raw.priority) ? raw.priority : "normal") as WishPriority,
+        priority: normalizePriority(raw.priority),
         notes: String(raw.notes ?? ""),
         purchased: Boolean(raw.purchased),
       };
@@ -584,6 +592,7 @@ export async function importJson(text: string): Promise<boolean> {
         desc: String(raw.desc ?? ""),
         date: String(raw.date || today()),
         time: String(raw.time || "09:00"),
+        priority: normalizePriority(raw.priority),
         done: Boolean(raw.done),
       };
       const saved = writeRow("reminders", { ...base, nid: (await schedule(base)) ?? null });
@@ -631,4 +640,4 @@ export const today = () => formatDate(new Date());
 export const tomorrow = () => addDays(1);
 export const money = (n: number, c: CurrencyCode = state.currency) => CURRENCY_SYM[c] + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const reminderDate = when;
-export const PRI: Record<Priority, number> = { low: 1, normal: 2, high: 3, urgent: 4 };
+export const PRI: Record<Priority, number> = { low: 1, medium: 2, high: 3 };

@@ -3,8 +3,10 @@ import type { ColorValue } from "react-native";
 import {
   ArrowLeft,
   Bell,
+  Calendar,
   Check,
   ChevronRight,
+  Clock,
   Compass,
   Eye,
   EyeOff,
@@ -16,6 +18,7 @@ import {
   Settings,
   Trash2,
   User,
+  X,
 } from "lucide-react-native";
 
 export type IconName =
@@ -24,6 +27,8 @@ export type IconName =
   | "user"
   | "settings"
   | "bell"
+  | "calendar"
+  | "clock"
   | "menu"
   | "chevron-right"
   | "check"
@@ -32,7 +37,8 @@ export type IconName =
   | "eye"
   | "eye-off"
   | "trash"
-  | "mail-open";
+  | "mail-open"
+  | "x";
 
 export interface IconProps {
   name: IconName;
@@ -47,6 +53,8 @@ const ICON_MAP: Record<IconName, LucideIcon> = {
   user: User,
   settings: Settings,
   bell: Bell,
+  calendar: Calendar,
+  clock: Clock,
   menu: Menu,
   "chevron-right": ChevronRight,
   check: Check,
@@ -56,6 +64,7 @@ const ICON_MAP: Record<IconName, LucideIcon> = {
   "eye-off": EyeOff,
   trash: Trash2,
   "mail-open": MailOpen,
+  x: X,
 };
 
 export function Icon({ name, size = 24, color = "#000", strokeWidth = 2 }: IconProps) {
