@@ -116,6 +116,7 @@ function SwipeableNotifRow({
         {...responder.panHandlers}
         style={[
           st.rowCard,
+          Platform.OS === "web" ? ({ touchAction: "pan-y" } as any) : null,
           {
             backgroundColor: item.read ? p.s2 : p.s1,
             borderColor: item.read ? p.line : p.ac,

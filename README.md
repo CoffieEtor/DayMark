@@ -1,4 +1,4 @@
-# DAYMARK (Expojet / Expo SDK 57) — iOS + Android, local-first
+# DAYMARKED (Expo SDK 58) — iOS, Android & Web, local-first
 Tasks, reminders, wishlist (GH₵) and a random purchase picker. All data stays on the phone (SQLite via Drizzle). No account, no server.
 
 ## Expojet choices

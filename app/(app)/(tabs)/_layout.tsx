@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { router, Tabs, usePathname } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, type IconName } from "../../../src/components/ui/icon";
 import { haptic } from "../../../src/haptics";
@@ -15,24 +15,23 @@ const TAB_ITEMS: [string, string, IconName][] = [
   ["wishlist", "Wishlist", "compass"],
 ];
 
-const MENU_ITEMS: [string, string, IconName, string][] = [
-  // ["index", "Today", "home", "/"],
-  // ["tasks", "Tasks", "check", "/tasks"],
-  // ["reminders", "Reminders", "bell", "/reminders"],
-  // ["wishlist", "Wishlist", "compass", "/wishlist"],
-  ["settings", "Settings", "settings", "/settings"],
-];
+// const MENU_ITEMS: [string, string, IconName, string][] = [
+//   ["index", "Today", "home", "/"],
+//   ["tasks", "Tasks", "check", "/tasks"],
+//   ["reminders", "Reminders", "bell", "/reminders"],
+//   ["wishlist", "Wishlist", "compass", "/wishlist"],
+// ];
 
 export default function TabsLayout() {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
-  const pathname = usePathname();
   const p = usePalette();
-  const { dueAlert, notifications } = useStore();
+  const { dueAlert, notifications, name, addressAs } = useStore();
   const slide = useRef(new Animated.Value(-DRAWER_W)).current;
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const onBtnTx = p.isDark ? "#101114" : "#FFFFFF";
+  const who = (addressAs || name).trim();
 
   useEffect(() => {
     if (open) {
@@ -71,7 +70,7 @@ export default function TabsLayout() {
           >
             <Icon name="menu" size={20} color={p.tx} />
           </Pressable>
-          <Text style={[st.brand, { color: p.mu }]}>DAYMARK</Text>
+          <Text style={[st.brand, { color: p.mu }]}>DAYMARKED</Text>
         </View>
 
         <Pressable
@@ -104,6 +103,7 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
+          animation: "shift",
           tabBarActiveTintColor: p.ac,
           tabBarInactiveTintColor: p.mu,
           tabBarStyle: { backgroundColor: p.bg, borderTopColor: p.line },
@@ -139,28 +139,30 @@ export default function TabsLayout() {
                 },
               ]}
             >
-              <View style={st.drawerHeader}>
-                <Text style={[st.drawerBrand, { color: p.tx }]}>DAYMARK</Text>
-                <Text style={[st.heading, { color: p.mu }]}>Menu</Text>
+              <View style={[st.drawerHeader, { borderBottomColor: p.line }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                  <View style={[st.userBadge, { backgroundColor: p.s1, borderColor: p.line }]}>
+                    <Icon name="user" size={18} color={p.ac} />
+                  </View>
+                  {who ? (
+                    <Text style={{ color: p.tx, fontSize: 15, fontWeight: "600", flex: 1 }} numberOfLines={1}>
+                      {who}
+                    </Text>
+                  ) : null}
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Open settings"
+                  hitSlop={10}
+                  onPress={() => {
+                    haptic.selection();
+                    pushPage("/settings");
+                  }}
+                  style={[st.menuBtn, { backgroundColor: p.s1, borderColor: p.line }]}
+                >
+                  <Icon name="settings" size={19} color={p.tx} />
+                </Pressable>
               </View>
-              {MENU_ITEMS.map(([name, title, icon, href]) => {
-                const active = pathname === href || pathname.endsWith(`/${name}`);
-                return (
-                  <Pressable
-                    key={name}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    onPress={() => {
-                      haptic.selection();
-                      pushPage(href);
-                    }}
-                    style={[st.item, active && { backgroundColor: p.s1, borderColor: p.line, borderWidth: 1 }]}
-                  >
-                    <Icon name={icon} size={20} color={active ? p.ac : p.mu} />
-                    <Text style={{ color: active ? p.ac : p.tx, fontSize: 16, fontWeight: active ? "600" : "400" }}>{title}</Text>
-                  </Pressable>
-                );
-              })}
             </Animated.View>
           </View>
         </Modal>
@@ -217,26 +219,21 @@ const st = StyleSheet.create({
     gap: 6,
   },
   drawerHeader: {
-    marginBottom: 12,
-    paddingHorizontal: 4,
-  },
-  drawerBrand: {
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-  },
-  heading: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  item: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    justifyContent: "space-between",
+    gap: 10,
+    paddingBottom: 14,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+  },
+  userBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   alertBanner: {
     flexDirection: "row",

@@ -11,7 +11,7 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style={p.isDark ? "light" : "dark"} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: p.bg } }} />
+      <Stack screenOptions={{ headerShown: false, animation: "fade", contentStyle: { backgroundColor: p.bg } }} />
     </>
   );
 }

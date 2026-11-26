@@ -40,7 +40,7 @@ export default function Layout() {
     headerTintColor: p.tx,
     headerTitleStyle: { color: p.tx, fontWeight: "700" as const },
     headerShadowVisible: false,
-    animation: "slide_from_right" as const,
+    animation: "ios_from_right" as const,
   };
 
   return (
@@ -48,8 +48,9 @@ export default function Layout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: "slide_from_right",
+          animation: "ios_from_right",
           gestureEnabled: true,
+          fullScreenGestureEnabled: true,
           contentStyle: { backgroundColor: p.bg },
         }}
       >

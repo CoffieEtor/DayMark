@@ -11,7 +11,7 @@ export default function Index() {
     const who = (addressAs || name).trim();
     return (
       <View style={[st.wrap, { backgroundColor: p.bg }]}>
-        <Text style={[st.brand, { color: p.ac }]}>DAYMARK</Text>
+        <Text style={[st.brand, { color: p.ac }]}>DAYMARKED</Text>
         <Text style={[st.tagline, { color: p.mu }]}>{who ? `Welcome back, ${who}` : "Plan your day. Own your time."}</Text>
       </View>
     );

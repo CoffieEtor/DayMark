@@ -50,7 +50,7 @@ export default function Settings() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `daymark-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `daymarked-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       setMsg("Backup downloaded.");
@@ -64,7 +64,7 @@ export default function Settings() {
       <H2 t="Profile" />
       <Input placeholder="Your name" value={nm} onChangeText={setNm} onEndEditing={() => void setName(nm.trim())} />
       <View style={{ height: 8 }} />
-      <Input placeholder="How DAYMARK addresses you (nickname)" value={addr} onChangeText={setAddr} onEndEditing={() => void setAddressAs(addr.trim())} />
+      <Input placeholder="How DAYMARKED addresses you (nickname)" value={addr} onChangeText={setAddr} onEndEditing={() => void setAddressAs(addr.trim())} />
       <Row><Btn label="Replay Quick Tour" kind="ghost" onPress={() => startTour()} /></Row>
 
       <H2 t="Appearance & Theme" />
@@ -177,7 +177,7 @@ export default function Settings() {
           kind="ghost"
           disabled={!imp.trim()}
           onPress={async () => {
-            setMsg((await importJson(imp)) ? "Backup merged by ID." : "That isn’t a valid DAYMARK backup.");
+            setMsg((await importJson(imp)) ? "Backup merged by ID." : "That isn’t a valid DAYMARKED backup.");
             setImp("");
           }}
         />
@@ -201,7 +201,7 @@ export default function Settings() {
 
       <H2 t="About" />
       <Card>
-        <Text style={{ color: p.tx, fontWeight: "600" }}>DAYMARK</Text>
+        <Text style={{ color: p.tx, fontWeight: "600" }}>DAYMARKED</Text>
         <Muted t={`Version 1.0.0 · ${p.isDark ? "Dark" : "Light"} theme · Currency ${currency}`} />
       </Card>
     </Screen>

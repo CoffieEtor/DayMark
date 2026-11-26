@@ -48,7 +48,7 @@ export default function OnboardingScreen() {
       <View style={st.body}>
         {step === 0 ? (
           <View style={st.section}>
-            <Text style={[st.eyebrow, { color: p.ac }]}>WELCOME TO DAYMARK</Text>
+            <Text style={[st.eyebrow, { color: p.ac }]}>WELCOME TO DAYMARKED</Text>
             <Text style={[st.title, { color: p.tx }]}>Calm clarity for every day.</Text>
             <Text style={[st.desc, { color: p.mu }]}>Organize tasks, time-sensitive reminders, and intentional purchases in one quiet space.</Text>
             <View style={[st.noteCard, { backgroundColor: p.s1, borderColor: p.line }]}>
@@ -91,7 +91,7 @@ export default function OnboardingScreen() {
         {step === 3 ? (
           <View style={st.section}>
             <Text style={[st.eyebrow, { color: p.ac }]}>ADDRESS AS</Text>
-            <Text style={[st.title, { color: p.tx }]}>How should DAYMARK greet you?</Text>
+            <Text style={[st.title, { color: p.tx }]}>How should DAYMARKED greet you?</Text>
             <Text style={[st.desc, { color: p.mu }]}>Pick a greeting style or type your own nickname.</Text>
             <Input
               placeholder="Preferred greeting (optional)"

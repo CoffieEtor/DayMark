@@ -39,7 +39,7 @@ export default function Dashboard() {
       {!st.notify && !bannerDismissed ? (
         <View style={[s.card, { backgroundColor: p.s1, borderColor: p.ac, marginTop: 14 }]}>
           <Text style={{ color: p.tx, fontWeight: "600" }}>Enable reminder notifications</Text>
-          <Muted t="Get alerted for scheduled reminders even when DAYMARK is closed." />
+          <Muted t="Get alerted for scheduled reminders even when DAYMARKED is closed." />
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
             <Btn label="Enable" onPress={() => void enableNotifications()} />
             <Btn label="Later" kind="ghost" onPress={() => setBannerDismissed(true)} />

@@ -87,7 +87,7 @@ export default function Reminders() {
     items.length ? items.map(card) : <Empty t={emptyTitle} sub="Reminders matching this filter appear here." />;
 
   return (
-    <Screen title="Reminders" sub={notify ? "OS alerts are on, even when DAYMARK is closed." : "In-app alerts are active. Enable OS notifications in Settings."}>
+    <Screen title="Reminders" sub={notify ? "OS alerts are on, even when DAYMARKED is closed." : "In-app alerts are active. Enable OS notifications in Settings."}>
       <Row><Btn label="Add reminder" onPress={() => setEdit("new")} /></Row>
       <Seg opts={[["all", "All"], ["today", "Today"], ["tomorrow", "Tomorrow"], ["upcoming", "Upcoming"], ["overdue", "Overdue"], ["completed", "Completed"]]} value={f} on={setF} />
       <Input placeholder="Search reminders" value={q} onChangeText={setQ} />

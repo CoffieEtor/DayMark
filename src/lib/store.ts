@@ -1,8 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { Platform } from "react-native";
-import { eq } from "drizzle-orm";
-import { getDb, migrate } from "../db/client";
-import * as T from "../db/schema";
+import { clearAllEntities, clearNotificationEntities, deleteEntity, type EntityKind, initStorage, type RawSnapshot, saveEntity, saveSetting } from "../db/persistence";
 import * as Notifications from "expo-notifications";
 import { setHapticsEnabled } from "../haptics";
 
@@ -105,7 +103,6 @@ let alertTimer: ReturnType<typeof setInterval> | null = null;
 export const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 export const useStore = () => useSyncExternalStore((f) => (subs.add(f), () => subs.delete(f)), () => state);
 
-const TABLES = { tasks: T.tasks, reminders: T.reminders, wishlist: T.wishlist, notifications: T.notifications } as const;
 function notifyAll() { subs.forEach((f) => f()); }
 function fail() { state = { ...state, error: "Could not save your data." }; notifyAll(); }
 function setState(patch: Partial<State>) { state = { ...state, ...patch }; notifyAll(); }
@@ -122,21 +119,20 @@ function parseJsonArray<X>(raw: unknown): X[] {
 }
 
 async function setSetting(key: string, value: string) {
-  try { getDb().insert(T.settings).values({ key, value }).onConflictDoUpdate({ target: T.settings.key, set: { value } }).run(); } catch { fail(); }
+  try { saveSetting(key, value); } catch { fail(); }
 }
 
-function writeRow(kind: keyof typeof TABLES, row: any) {
-  const dbRow = kind === "tasks" ? { ...row, subtasks: JSON.stringify(row.subtasks ?? []), updatedAt: Date.now() } : { ...row, updatedAt: Date.now() };
-  try { getDb().insert(TABLES[kind] as any).values(dbRow).onConflictDoUpdate({ target: (TABLES[kind] as any).id, set: dbRow }).run(); } catch { fail(); }
+function writeRow(kind: EntityKind, row: any) {
+  try { saveEntity(kind, row); } catch { fail(); }
   return row;
 }
 
-function erase(kind: keyof typeof TABLES, id: string) {
-  try { getDb().delete(TABLES[kind] as any).where(eq((TABLES[kind] as any).id, id)).run(); } catch { fail(); }
+function erase(kind: EntityKind, id: string) {
+  try { deleteEntity(kind, id); } catch { fail(); }
 }
 
-function readAll() {
-  const kv = Object.fromEntries(getDb().select().from(T.settings).all().map((x) => [x.key, x.value]));
+function hydrateSnapshot(snap: RawSnapshot) {
+  const kv = snap.settings ?? {};
   const currency = (["GHS", "USD", "EUR", "GBP", "NGN", "KES"].includes(kv.currency) ? kv.currency : "GHS") as CurrencyCode;
   const accent = (["gold", "emerald", "azure", "violet", "amber"].includes(kv.accent) ? kv.accent : "gold") as AccentKey;
   const theme = (["dark", "light", "system"].includes(kv.theme) ? kv.theme : "dark") as ThemePref;
@@ -145,21 +141,17 @@ function readAll() {
   const hapticsEnabled = kv.haptics !== "0";
   setHapticsEnabled(hapticsEnabled);
   clearedNotifs = new Set(parseJsonArray<string>(kv.cleared_notifs));
-  const rawTasks = getDb().select().from(T.tasks).all();
-  const tasks: Task[] = rawTasks.map((t) => ({ ...t, priority: t.priority as Priority, subtasks: parseJsonArray<Subtask>(t.subtasks) }));
-  const wishlist: Wish[] = getDb().select().from(T.wishlist).all().map((w) => ({
+  const tasks: Task[] = snap.tasks.map((t) => ({ ...t, priority: t.priority as Priority, subtasks: parseJsonArray<Subtask>(t.subtasks) }));
+  const wishlist: Wish[] = snap.wishlist.map((w) => ({
     ...w,
     priority: (["low", "normal", "high"].includes(w.priority) ? w.priority : "normal") as WishPriority,
   }));
-  const notifications: AppNotification[] = getDb()
-    .select()
-    .from(T.notifications)
-    .all()
+  const notifications: AppNotification[] = snap.notifications
     .map((n) => ({ ...n, kind: (["reminder", "task", "system"].includes(n.kind) ? n.kind : "system") as AppNotification["kind"] }))
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return {
     tasks,
-    reminders: getDb().select().from(T.reminders).all() as Reminder[],
+    reminders: snap.reminders as Reminder[],
     wishlist,
     notifications,
     name: kv.name ?? "",
@@ -240,7 +232,10 @@ export async function init() {
   if (Platform.OS !== "web") {
     Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }) });
   }
-  try { await migrate(); state = { ...state, ...readAll() }; } catch { state = { ...state, error: "Could not read saved data." }; }
+  try {
+    const snap = await initStorage();
+    state = { ...state, ...hydrateSnapshot(snap) };
+  } catch { state = { ...state, error: "Could not read saved data." }; }
   setState({ ready: true });
   checkDueReminders();
   if (alertTimer) clearInterval(alertTimer);
@@ -292,7 +287,7 @@ export async function sendTestNotification(): Promise<boolean> {
   const now = new Date();
   const item: AppNotification = writeRow("notifications", {
     id: `sys_${uid()}`,
-    title: "DAYMARK Test Notification",
+    title: "DAYMARKED Test Notification",
     body: "In-app notifications are active. Swipe left or right to manage.",
     date: today(),
     time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
@@ -311,7 +306,7 @@ export async function sendTestNotification(): Promise<boolean> {
       if (!ok) return true;
     }
     await Notifications.scheduleNotificationAsync({
-      content: { title: "DAYMARK Test", body: "Notifications are working properly." },
+      content: { title: "DAYMARKED Test", body: "Notifications are working properly." },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 2, channelId: "reminders" },
     });
     return true;
@@ -374,7 +369,7 @@ export async function deleteNotification(id: string) {
 export async function clearNotifications() {
   for (const n of state.notifications) clearedNotifs.add(n.id);
   await setSetting("cleared_notifs", JSON.stringify(Array.from(clearedNotifs).slice(-200)));
-  try { getDb().delete(T.notifications).run(); } catch { fail(); }
+  try { clearNotificationEntities(); } catch { fail(); }
   setState({ notifications: [] });
 }
 
@@ -398,7 +393,7 @@ export const startTour = () => setState({ tourStep: 0 });
 export const setTourStep = (tourStep: number | null) => setState({ tourStep });
 
 export const exportJson = () => JSON.stringify({
-  app: "DAYMARK",
+  app: "DAYMARKED",
   version: 2,
   tasks: state.tasks,
   reminders: state.reminders,
@@ -415,7 +410,7 @@ export const exportJson = () => JSON.stringify({
 export async function importJson(text: string): Promise<boolean> {
   try {
     const d = JSON.parse(text);
-    if (!d || typeof d !== "object" || d.app !== "DAYMARK") return false;
+    if (!d || typeof d !== "object" || (d.app !== "DAYMARKED" && d.app !== "DAYMARK")) return false;
     if ((d.tasks !== undefined && !Array.isArray(d.tasks)) || (d.reminders !== undefined && !Array.isArray(d.reminders)) || (d.wishlist !== undefined && !Array.isArray(d.wishlist))) {
       return false;
     }
@@ -481,7 +476,7 @@ export async function clearAll() {
   for (const r of state.reminders) await cancel(r.nid);
   clearedNotifs.clear();
   await setSetting("cleared_notifs", "[]");
-  try { for (const k of Object.keys(TABLES) as (keyof typeof TABLES)[]) getDb().delete(TABLES[k] as any).run(); } catch { fail(); }
+  try { clearAllEntities(); } catch { fail(); }
   setState({ tasks: [], reminders: [], wishlist: [], notifications: [] });
 }
 

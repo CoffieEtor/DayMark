@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "DAYMARK",
+    "name": "DAYMARKED",
     "slug": "daymark",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "daymark",
+    "scheme": "daymarked",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "splash": {
@@ -18,7 +18,7 @@
         "backgroundImage": "./assets/adaptive-icon-background.png",
         "monochromeImage": "./assets/adaptive-icon-monochrome.png"
       },
-      "package": "com.expojet.daymark"
+      "package": "com.expojet.daymarked"
     },
     "web": {
       "output": "single",
@@ -34,7 +34,7 @@
       "typedRoutes": true
     },
     "ios": {
-      "bundleIdentifier": "com.expojet.daymark"
+      "bundleIdentifier": "com.expojet.daymarked"
     },
     "runtimeVersion": {
       "policy": "appVersion"

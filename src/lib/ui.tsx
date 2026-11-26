@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useColorScheme, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, Animated, Easing, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useColorScheme, View } from "react-native";
 import { Icon } from "../components/ui/icon";
 import { haptic } from "../haptics";
 import { ACCENTS, useStore } from "./store";
@@ -25,12 +25,27 @@ export function useAccent(): string {
 
 export function Screen({ title, sub, children }: { title?: string; sub?: string; children: React.ReactNode }) {
   const p = usePalette();
+  const isStackSub = !title;
+  const animX = useRef(new Animated.Value(Platform.OS === "web" && isStackSub ? 28 : 0)).current;
+  const animO = useRef(new Animated.Value(Platform.OS === "web" && isStackSub ? 0 : 1)).current;
+
+  useEffect(() => {
+    if (Platform.OS === "web" && isStackSub) {
+      Animated.parallel([
+        Animated.timing(animX, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+        Animated.timing(animO, { toValue: 1, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+      ]).start();
+    }
+  }, [animX, animO, isStackSub]);
+
   return (
-    <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: 18, paddingTop: title ? 10 : 8, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      {title ? <Text style={[s.h1, { color: p.tx }]} accessibilityRole="header">{title}</Text> : null}
-      {sub ? <Text style={{ color: p.mu }}>{sub}</Text> : null}
-      {children}
-    </ScrollView>
+    <Animated.View style={{ flex: 1, backgroundColor: p.bg, opacity: animO, transform: [{ translateX: animX }] }}>
+      <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: 18, paddingTop: title ? 10 : 8, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        {title ? <Text style={[s.h1, { color: p.tx }]} accessibilityRole="header">{title}</Text> : null}
+        {sub ? <Text style={{ color: p.mu }}>{sub}</Text> : null}
+        {children}
+      </ScrollView>
+    </Animated.View>
   );
 }
 export const H2 = ({ t }: { t: string }) => {
@@ -85,7 +100,19 @@ export function CardMenu({ label, onEdit, onDelete }: { label: string; onEdit: (
   const p = usePalette();
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const close = () => { setOpen(false); setConfirming(false); };
+  const slideY = useRef(new Animated.Value(220)).current;
+  const close = () => {
+    Animated.timing(slideY, { toValue: 220, duration: 150, easing: Easing.in(Easing.cubic), useNativeDriver: Platform.OS !== "web" }).start(() => {
+      setOpen(false);
+      setConfirming(false);
+    });
+  };
+  useEffect(() => {
+    if (open) {
+      slideY.setValue(220);
+      Animated.timing(slideY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== "web" }).start();
+    }
+  }, [open, slideY]);
   return (
     <>
       <Pressable
@@ -100,24 +127,26 @@ export function CardMenu({ label, onEdit, onDelete }: { label: string; onEdit: (
       {open ? (
         <Modal animationType="fade" transparent visible onRequestClose={close}>
           <Pressable style={s.backdrop} onPress={close}>
-            <Pressable style={[s.sheet, { backgroundColor: p.bg, borderColor: p.line }]} onPress={() => {}}>
-              <Text style={[s.h2, { marginTop: 0, color: p.tx }]} numberOfLines={1}>{label}</Text>
-              {confirming ? (
-                <>
-                  <Text style={{ color: p.mu, marginBottom: 14 }}>"{label}" will be removed.</Text>
-                  <Row>
-                    <Btn label="Delete" kind="bad" onPress={() => { close(); onDelete(); }} />
-                    <Btn label="Cancel" kind="ghost" onPress={() => setConfirming(false)} />
-                  </Row>
-                </>
-              ) : (
-                <View style={{ gap: 8 }}>
-                  <Btn label="Edit" kind="ghost" onPress={() => { close(); onEdit(); }} />
-                  <Btn label="Delete" kind="bad" onPress={() => setConfirming(true)} />
-                  <Btn label="Cancel" kind="ghost" onPress={close} />
-                </View>
-              )}
-            </Pressable>
+            <Animated.View style={[s.sheet, { backgroundColor: p.bg, borderColor: p.line, transform: [{ translateY: slideY }] }]}>
+              <Pressable onPress={() => {}}>
+                <Text style={[s.h2, { marginTop: 0, color: p.tx }]} numberOfLines={1}>{label}</Text>
+                {confirming ? (
+                  <>
+                    <Text style={{ color: p.mu, marginBottom: 14 }}>"{label}" will be removed.</Text>
+                    <Row>
+                      <Btn label="Delete" kind="bad" onPress={() => { close(); onDelete(); }} />
+                      <Btn label="Cancel" kind="ghost" onPress={() => setConfirming(false)} />
+                    </Row>
+                  </>
+                ) : (
+                  <View style={{ gap: 8 }}>
+                    <Btn label="Edit" kind="ghost" onPress={() => { setOpen(false); setConfirming(false); onEdit(); }} />
+                    <Btn label="Delete" kind="bad" onPress={() => setConfirming(true)} />
+                    <Btn label="Cancel" kind="ghost" onPress={close} />
+                  </View>
+                )}
+              </Pressable>
+            </Animated.View>
           </Pressable>
         </Modal>
       ) : null}
@@ -158,6 +187,10 @@ export function FormSheet({
   const [v, setV] = useState<Record<string, string>>(initial);
   const [err, setErr] = useState("");
   const p = usePalette();
+  const slideY = useRef(new Animated.Value(320)).current;
+  useEffect(() => {
+    Animated.timing(slideY, { toValue: 0, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== "web" }).start();
+  }, [slideY]);
   const submit = () => {
     setErr("");
     for (const f of fields) if (f.required && !v[f.k]?.trim()) return setErr(`${f.label} is required.`);
@@ -165,9 +198,9 @@ export function FormSheet({
     if (msg) setErr(msg);
   };
   return (
-    <Modal animationType="slide" transparent visible onRequestClose={onClose}>
+    <Modal animationType="fade" transparent visible onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.6)" }}>
-        <View style={[s.sheet, { backgroundColor: p.bg, borderColor: p.line }]}>
+        <Animated.View style={[s.sheet, { backgroundColor: p.bg, borderColor: p.line, transform: [{ translateY: slideY }] }]}>
           <ScrollView keyboardShouldPersistTaps="handled">
             <Text style={[s.h1, { color: p.tx }]}>{title}</Text>
             {fields.map((f) => (
@@ -209,7 +242,7 @@ export function FormSheet({
             {err ? <Text style={{ color: p.bad, marginTop: 10 }} accessibilityRole="alert">{err}</Text> : null}
             <Row><Btn label="Save" onPress={submit} /><Btn label="Cancel" kind="ghost" onPress={onClose} /></Row>
           </ScrollView>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
