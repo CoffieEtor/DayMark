@@ -156,7 +156,7 @@ export function CardMenu({ label, onEdit, onDelete }: { label: string; onEdit: (
                 {
                   backgroundColor: p.bg,
                   borderColor: p.line,
-                  paddingBottom: Math.max(insets.bottom, 16) + 12,
+                  paddingBottom: Platform.OS === "web" ? ("calc(env(safe-area-inset-bottom, 0px) + 18px)" as any) : Math.max(insets.bottom, 16) + 12,
                   maxWidth: r.maxW,
                   width: "100%",
                   alignSelf: "center",
@@ -244,7 +244,7 @@ export function FormSheet({
             {
               backgroundColor: p.bg,
               borderColor: p.line,
-              paddingBottom: Math.max(insets.bottom, 16) + 14,
+              paddingBottom: Platform.OS === "web" ? ("calc(env(safe-area-inset-bottom, 0px) + 18px)" as any) : Math.max(insets.bottom, 16) + 14,
               maxWidth: r.maxW,
               width: "100%",
               alignSelf: "center",

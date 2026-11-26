@@ -55,7 +55,11 @@ export default function TabsLayout() {
 
   const pushPage = (href: string) => {
     setOpen(false);
-    router.push(href as any);
+    if (Platform.OS === "web" && typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => router.push(href as any));
+    } else {
+      router.push(href as any);
+    }
   };
 
   return (
@@ -141,8 +145,8 @@ export default function TabsLayout() {
                   width: Math.min(DRAWER_W, Math.round(r.width * 0.78)),
                   backgroundColor: p.bg,
                   borderRightColor: p.line,
-                  paddingTop: Math.max(insets.top, 12) + 8,
-                  paddingBottom: Math.max(insets.bottom, 20),
+                  paddingTop: Platform.OS === "web" ? ("calc(env(safe-area-inset-top, 0px) + 14px)" as any) : Math.max(insets.top, 12) + 8,
+                  paddingBottom: Platform.OS === "web" ? ("calc(env(safe-area-inset-bottom, 0px) + 20px)" as any) : Math.max(insets.bottom, 20),
                   transform: [{ translateX: slide }],
                 },
               ]}
@@ -218,9 +222,11 @@ const st = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
+    zIndex: 1,
     backgroundColor: "rgba(0,0,0,.6)",
   },
   drawer: {
+    zIndex: 2,
     height: "100%",
     paddingHorizontal: 16,
     borderRightWidth: 1,
