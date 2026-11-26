@@ -95,3 +95,128 @@ export async function showWebNotification(title: string, body: string, tag?: str
     return false;
   }
 }
+
+export type PushConfig = {
+  configured: boolean;
+  publicKey: string | null;
+};
+
+export type RemoteSchedulePayload = {
+  reminderId: string;
+  title: string;
+  body: string;
+  date: string;
+  time: string;
+  fireAtMs: number;
+};
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(base64);
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) {
+    output[i] = raw.charCodeAt(i);
+  }
+  return output;
+}
+
+export async function getPushConfig(): Promise<PushConfig> {
+  if (Platform.OS !== "web" || typeof window === "undefined") {
+    return { configured: false, publicKey: null };
+  }
+  try {
+    const res = await fetch("/api/push/public-key", { cache: "no-store" });
+    if (!res.ok) return { configured: false, publicKey: null };
+    const data = await res.json();
+    return {
+      configured: Boolean(data?.configured && data?.publicKey),
+      publicKey: typeof data?.publicKey === "string" ? data.publicKey : null,
+    };
+  } catch {
+    return { configured: false, publicKey: null };
+  }
+}
+
+export async function ensureWebPushSubscription(subId: string): Promise<{ ok: boolean; configured: boolean; reason?: string }> {
+  if (Platform.OS !== "web" || typeof window === "undefined") {
+    return { ok: false, configured: false, reason: "unsupported" };
+  }
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    return { ok: false, configured: false, reason: "no-push-manager" };
+  }
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+    return { ok: false, configured: false, reason: "no-permission" };
+  }
+  const cfg = await getPushConfig();
+  if (!cfg.configured || !cfg.publicKey) {
+    return { ok: false, configured: false, reason: "server-unconfigured" };
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const appServerKey = urlBase64ToUint8Array(cfg.publicKey);
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: appServerKey.buffer as ArrayBuffer,
+      });
+    }
+    const res = await fetch("/api/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subId, subscription: sub.toJSON() }),
+    });
+    if (!res.ok) return { ok: false, configured: true, reason: "subscribe-failed" };
+    return { ok: true, configured: true };
+  } catch {
+    return { ok: false, configured: true, reason: "subscribe-error" };
+  }
+}
+
+export async function scheduleRemoteReminderPush(subId: string, payload: RemoteSchedulePayload): Promise<boolean> {
+  if (Platform.OS !== "web" || typeof window === "undefined") return false;
+  try {
+    const res = await fetch("/api/push/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subId, ...payload }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function cancelRemoteReminderPush(subId: string, reminderIds: string[]): Promise<boolean> {
+  if (Platform.OS !== "web" || typeof window === "undefined" || !reminderIds.length) return false;
+  try {
+    const res = await fetch("/api/push/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subId, reminderIds }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function sendRemoteTestPush(subId: string): Promise<{ ok: boolean; configured: boolean }> {
+  if (Platform.OS !== "web" || typeof window === "undefined") {
+    return { ok: false, configured: false };
+  }
+  const subStatus = await ensureWebPushSubscription(subId);
+  if (!subStatus.configured) return { ok: false, configured: false };
+  if (!subStatus.ok) return { ok: false, configured: true };
+  try {
+    const res = await fetch("/api/push/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subId }),
+    });
+    return { ok: res.ok, configured: true };
+  } catch {
+    return { ok: false, configured: true };
+  }
+}

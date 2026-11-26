@@ -3,7 +3,15 @@ import { Platform } from "react-native";
 import { clearAllEntities, clearNotificationEntities, deleteEntity, type EntityKind, initStorage, type RawSnapshot, saveEntity, saveSetting } from "../db/persistence";
 import * as Notifications from "expo-notifications";
 import { setHapticsEnabled } from "../haptics";
-import { requestWebNotificationPermission, showWebNotification } from "./pwa";
+import {
+  cancelRemoteReminderPush,
+  ensureWebPushSubscription,
+  getPushConfig,
+  requestWebNotificationPermission,
+  scheduleRemoteReminderPush,
+  sendRemoteTestPush,
+  showWebNotification,
+} from "./pwa";
 
 export type Priority = "low" | "normal" | "high" | "urgent";
 export type WishPriority = "low" | "normal" | "high";
@@ -73,6 +81,9 @@ type State = {
   onboarded: boolean;
   tourStep: number | null;
   dueAlert: Reminder | null;
+  pushSubId: string;
+  pushServerConfigured: boolean | null;
+  pushSubscribed: boolean;
   ready: boolean;
   error: string;
 };
@@ -94,6 +105,9 @@ let state: State = {
   onboarded: false,
   tourStep: null,
   dueAlert: null,
+  pushSubId: "",
+  pushServerConfigured: null,
+  pushSubscribed: false,
   ready: false,
   error: "",
 };
@@ -103,6 +117,7 @@ let clearedNotifs = new Set<string>();
 let alertTimer: ReturnType<typeof setInterval> | null = null;
 export const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 export const useStore = () => useSyncExternalStore((f) => (subs.add(f), () => subs.delete(f)), () => state);
+export const getPushStatus = () => ({ configured: state.pushServerConfigured, subscribed: state.pushSubscribed });
 
 function notifyAll() { subs.forEach((f) => f()); }
 function fail() { state = { ...state, error: "Could not save your data." }; notifyAll(); }
@@ -165,6 +180,7 @@ function hydrateSnapshot(snap: RawSnapshot) {
     leftSwipe,
     hapticsEnabled,
     onboarded: kv.onboarded === "1",
+    pushSubId: kv.push_sub_id ?? "",
   };
 }
 
@@ -244,6 +260,7 @@ export async function init() {
   checkDueReminders();
   if (alertTimer) clearInterval(alertTimer);
   alertTimer = setInterval(checkDueReminders, 15000);
+  if (Platform.OS === "web") void initWebPushSync();
 }
 
 const when = (r: Reminder) => new Date(`${r.date}T${r.time}:00`);
@@ -262,12 +279,98 @@ async function schedule(r: Reminder): Promise<string | undefined> {
   } catch { return undefined; }
 }
 
+async function getOrCreatePushSubId(): Promise<string> {
+  if (state.pushSubId) return state.pushSubId;
+  const subId = `sub_${uid()}`;
+  await setSetting("push_sub_id", subId);
+  setState({ pushSubId: subId });
+  return subId;
+}
+
+async function syncRemotePushConfig(): Promise<boolean> {
+  if (Platform.OS !== "web") return false;
+  const subId = await getOrCreatePushSubId();
+  if (state.notify && typeof Notification !== "undefined" && Notification.permission === "granted") {
+    const res = await ensureWebPushSubscription(subId);
+    setState({ pushServerConfigured: res.configured, pushSubscribed: res.ok });
+    return res.ok;
+  }
+  const cfg = await getPushConfig();
+  setState({ pushServerConfigured: cfg.configured, pushSubscribed: false });
+  return false;
+}
+
+async function cancelRemoteReminder(idOrIds: string | string[]): Promise<void> {
+  if (Platform.OS !== "web") return;
+  const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
+  if (!ids.length || !state.pushSubId) return;
+  await cancelRemoteReminderPush(state.pushSubId, ids);
+}
+
+async function scheduleRemoteReminder(r: Reminder): Promise<boolean> {
+  if (Platform.OS !== "web") return false;
+  const dt = when(r);
+  if (!state.notify || r.done || Number.isNaN(dt.getTime()) || dt <= new Date()) {
+    await cancelRemoteReminder(r.id);
+    return false;
+  }
+  const subId = await getOrCreatePushSubId();
+  if (!state.pushSubscribed) {
+    const res = await ensureWebPushSubscription(subId);
+    setState({ pushServerConfigured: res.configured, pushSubscribed: res.ok });
+    if (!res.ok) return false;
+  }
+  return scheduleRemoteReminderPush(subId, {
+    reminderId: r.id,
+    title: r.title,
+    body: r.desc || `Reminder scheduled for ${r.date} at ${r.time}`,
+    date: r.date,
+    time: r.time,
+    fireAtMs: dt.getTime(),
+  });
+}
+
+async function syncWebReminderAndTag(r: Reminder): Promise<void> {
+  const ok = await scheduleRemoteReminder(r);
+  if (!ok) return;
+  const subId = state.pushSubId;
+  const tag = `remote:${subId}:${when(r).getTime()}`;
+  const current = state.reminders.find((x) => x.id === r.id);
+  if (!current || current.date !== r.date || current.time !== r.time || current.done !== r.done || current.nid === tag) return;
+  const updated = writeRow("reminders", { ...current, nid: tag });
+  setState({ reminders: upsert(state.reminders, updated) });
+}
+
+async function initWebPushSync(): Promise<void> {
+  const subscribed = await syncRemotePushConfig();
+  if (!subscribed || !state.notify) return;
+  const subId = state.pushSubId;
+  const now = new Date();
+  for (const r of state.reminders) {
+    const dt = when(r);
+    if (r.done || Number.isNaN(dt.getTime()) || dt <= now) continue;
+    const expectedTag = `remote:${subId}:${dt.getTime()}`;
+    if (r.nid === expectedTag) continue;
+    await syncWebReminderAndTag(r);
+  }
+}
+
 export async function enableNotifications(): Promise<boolean> {
   if (Platform.OS === "web") {
     const ok = await requestWebNotificationPermission();
     state = { ...state, notify: ok };
     await setSetting("notify", ok ? "1" : "0");
     notifyAll();
+    if (ok) {
+      const subId = await getOrCreatePushSubId();
+      const res = await ensureWebPushSubscription(subId);
+      setState({ pushServerConfigured: res.configured, pushSubscribed: res.ok });
+      if (res.ok) {
+        for (const r of state.reminders) {
+          await syncWebReminderAndTag(r);
+        }
+      }
+    }
     return ok;
   }
   const ok = (await Notifications.requestPermissionsAsync()).granted;
@@ -279,13 +382,16 @@ export async function enableNotifications(): Promise<boolean> {
 }
 
 export async function disableNotifications(): Promise<void> {
+  if (Platform.OS === "web") {
+    await cancelRemoteReminder(state.reminders.map((r) => r.id));
+  }
   const rs: Reminder[] = [];
   for (const r of state.reminders) {
     await cancel(r.nid);
     rs.push(writeRow("reminders", { ...r, nid: null }));
   }
   await setSetting("notify", "0");
-  setState({ notify: false, reminders: rs });
+  setState({ notify: false, pushSubscribed: false, reminders: rs });
 }
 
 export async function sendTestNotification(): Promise<boolean> {
@@ -309,7 +415,12 @@ export async function sendTestNotification(): Promise<boolean> {
       state = { ...state, notify: true };
       await setSetting("notify", "1");
       notifyAll();
-      await showWebNotification("DAYMARKED Test", "Notifications are working on this device.", "daymarked-test");
+      const subId = await getOrCreatePushSubId();
+      const remote = await sendRemoteTestPush(subId);
+      setState({ pushServerConfigured: remote.configured, pushSubscribed: remote.ok });
+      if (!remote.ok) {
+        await showWebNotification("DAYMARKED Test", "Notifications are working while the app is open.", "daymarked-test");
+      }
     }
     return true;
   }
@@ -336,8 +447,10 @@ export const saveWish = async (w: Wish) => setState({ wishlist: upsert(state.wis
 export const delWish = async (id: string) => { erase("wishlist", id); setState({ wishlist: state.wishlist.filter((x) => x.id !== id) }); };
 export async function saveReminder(r: Reminder) {
   await cancel(r.nid);
-  setState({ reminders: upsert(state.reminders, writeRow("reminders", { ...r, nid: (await schedule(r)) ?? null })) });
+  const saved = writeRow("reminders", { ...r, nid: (await schedule(r)) ?? null });
+  setState({ reminders: upsert(state.reminders, saved) });
   syncNotifications();
+  if (Platform.OS === "web") void syncWebReminderAndTag(saved);
 }
 export async function snoozeReminder(r: Reminder, mode: "1h" | "tomorrow") {
   let date = r.date;
@@ -355,6 +468,7 @@ export async function snoozeReminder(r: Reminder, mode: "1h" | "tomorrow") {
 }
 export async function delReminder(id: string) {
   await cancel(state.reminders.find((x) => x.id === id)?.nid);
+  if (Platform.OS === "web") void cancelRemoteReminder(id);
   erase("reminders", id); setState({ reminders: state.reminders.filter((x) => x.id !== id) });
 }
 
@@ -460,6 +574,7 @@ export async function importJson(text: string): Promise<boolean> {
       nextWishlist = upsert(nextWishlist, writeRow("wishlist", normalized));
     }
     let nextReminders = [...state.reminders];
+    const importedReminders: Reminder[] = [];
     for (const raw of d.reminders ?? []) {
       const existing = nextReminders.find((x) => x.id === raw.id);
       if (existing?.nid) await cancel(existing.nid);
@@ -471,9 +586,14 @@ export async function importJson(text: string): Promise<boolean> {
         time: String(raw.time || "09:00"),
         done: Boolean(raw.done),
       };
-      nextReminders = upsert(nextReminders, writeRow("reminders", { ...base, nid: (await schedule(base)) ?? null }));
+      const saved = writeRow("reminders", { ...base, nid: (await schedule(base)) ?? null });
+      nextReminders = upsert(nextReminders, saved);
+      importedReminders.push(saved);
     }
     setState({ tasks: nextTasks, wishlist: nextWishlist, reminders: nextReminders });
+    if (Platform.OS === "web" && state.notify) {
+      for (const r of importedReminders) void syncWebReminderAndTag(r);
+    }
     if (typeof d.name === "string" && d.name.trim()) await setName(d.name);
     if (typeof d.addressAs === "string" && d.addressAs.trim()) await setAddressAs(d.addressAs);
     if (["GHS", "USD", "EUR", "GBP", "NGN", "KES"].includes(d.currency)) await setCurrency(d.currency);
@@ -487,6 +607,9 @@ export async function importJson(text: string): Promise<boolean> {
 }
 
 export async function clearAll() {
+  if (Platform.OS === "web") {
+    void cancelRemoteReminder(state.reminders.map((r) => r.id));
+  }
   for (const r of state.reminders) await cancel(r.nid);
   clearedNotifs.clear();
   await setSetting("cleared_notifs", "[]");

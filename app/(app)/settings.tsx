@@ -12,6 +12,7 @@ import {
   disableNotifications,
   enableNotifications,
   exportJson,
+  getPushStatus,
   importJson,
   sendTestNotification,
   setAccent,
@@ -34,7 +35,7 @@ const SWIPE_LABEL: Record<SwipeAction, string> = {
 };
 
 export default function Settings() {
-  const { name, addressAs, notify, currency, accent, theme, rightSwipe, leftSwipe, hapticsEnabled, tasks, reminders, wishlist } = useStore();
+  const { name, addressAs, notify, pushServerConfigured, pushSubscribed, currency, accent, theme, rightSwipe, leftSwipe, hapticsEnabled, tasks, reminders, wishlist } = useStore();
   const p = usePalette();
   const [nm, setNm] = useState(name);
   const [addr, setAddr] = useState(addressAs);
@@ -125,7 +126,19 @@ export default function Settings() {
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View style={{ flex: 1, paddingRight: 12 }}>
             <Text style={{ color: p.tx, fontWeight: "600" }}>Notifications</Text>
-            <Muted t={notify ? "On. Reminders alert you on schedule." : "Off. Turn on to receive reminder alerts."} />
+            <Muted
+              t={
+                !notify
+                  ? "Off. Turn on to receive reminder alerts."
+                  : Platform.OS === "web"
+                    ? pushSubscribed
+                      ? "On. Closed-app push notifications are active on this device."
+                      : pushServerConfigured === false
+                        ? "On (open-app only). Add Vercel push env vars for closed-app iPhone push."
+                        : "On. Connecting closed-app push notifications..."
+                    : "On. Reminders alert you on schedule."
+              }
+            />
           </View>
           <Btn
             label={notify ? "On" : "Off"}
@@ -151,7 +164,18 @@ export default function Settings() {
           <Btn
             label="Send test notification"
             kind="ghost"
-            onPress={async () => setMsg((await sendTestNotification()) ? "Test notification sent." : "Could not send test notification.")}
+            onPress={async () => {
+              const ok = await sendTestNotification();
+              if (!ok) {
+                setMsg("Could not send test notification.");
+                return;
+              }
+              if (Platform.OS === "web" && getPushStatus().configured === false) {
+                setMsg("In-app test sent. Add Vercel push env vars to test closed-app iPhone push.");
+              } else {
+                setMsg("Test notification sent.");
+              }
+            }}
           />
         </Row>
       </Card>
